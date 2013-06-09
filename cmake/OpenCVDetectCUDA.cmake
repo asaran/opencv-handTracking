@@ -26,8 +26,20 @@ if(CUDA_FOUND)
     set(HAVE_CUBLAS 1)
   endif()
 
+  if(${CUDA_VERSION} VERSION_LESS "5.5")
+    find_cuda_helper_libs(npp)
+  else()
+    find_cuda_helper_libs(nppc)
+    find_cuda_helper_libs(nppi)
+    find_cuda_helper_libs(npps)
+    set(CUDA_npp_LIBRARY ${CUDA_nppc_LIBRARY} ${CUDA_nppi_LIBRARY} ${CUDA_npps_LIBRARY})
+  endif()
+
   if(WITH_NVCUVID)
     find_cuda_helper_libs(nvcuvid)
+    if(WIN32)
+      find_cuda_helper_libs(nvcuvenc)
+    endif()
     set(HAVE_NVCUVID 1)
   endif()
 
@@ -136,8 +148,6 @@ if(CUDA_FOUND)
 
   mark_as_advanced(CUDA_BUILD_CUBIN CUDA_BUILD_EMULATION CUDA_VERBOSE_BUILD CUDA_SDK_ROOT_DIR)
 
-  find_cuda_helper_libs(npp)
-
   macro(ocv_cuda_compile VAR)
     foreach(var CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_RELEASE CMAKE_CXX_FLAGS_DEBUG)
       set(${var}_backup_in_cuda_compile_ "${${var}}")
@@ -150,6 +160,10 @@ if(CUDA_FOUND)
 
       # we remove -Wsign-promo as it generates warnings under linux
       string(REPLACE "-Wsign-promo" "" ${var} "${${var}}")
+
+      # we remove -fvisibility-inlines-hidden because it's used for C++ compiler
+      # but NVCC uses C compiler by default
+      string(REPLACE "-fvisibility-inlines-hidden" "" ${var} "${${var}}")
     endforeach()
 
     if(BUILD_SHARED_LIBS)
