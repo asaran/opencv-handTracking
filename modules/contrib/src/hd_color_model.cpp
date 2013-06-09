@@ -54,7 +54,7 @@ const bool def_useDepth = false;
 float def_hranges[] = {0, 180};
 float def_sranges[] = {0, 256};
 float def_vranges[] = {0, 256};
-float def_dranges[] = {400, 7000}; 	// approx. to be replacwith exact value
+float def_dranges[] = {400, 7000}; 	// approx. to be replaced with exact value
 
 HDcolorModel::HDcolorModel(void) {
 	useDepth = def_useDepth;
@@ -90,7 +90,7 @@ HDcolorModel::HDcolorModel(vector<int> _noOfBins, bool _useDepth) {
 	histRange[3][0] = def_dranges[0];
 	histRange[3][1] = def_dranges[1];
 	frameSize = Size(0, 0);
-	useDepth = def_useDepth;
+	useDepth = _useDepth;
 	paramInit = true;
 	detectorInit = false;
 }
