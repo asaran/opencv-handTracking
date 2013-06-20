@@ -55,8 +55,8 @@ namespace HT {
 class CV_EXPORTS HDcolorModel: public HandDetector {
 protected:
 
-	static const uint intParamsN = 7;
-	static const uint doubleParamsN = 8;
+	static const unsigned int intParamsN = 7;
+	static const unsigned int doubleParamsN = 8;
 
 	// specifies if the depth is to be used
 	bool useDepth;

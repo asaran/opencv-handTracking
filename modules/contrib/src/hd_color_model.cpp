@@ -179,7 +179,7 @@ void HDcolorModel::detect(Mat & _rgbImg, Mat & _depthImg, OutputArray _probImg) 
 	multiply(backPro[0], backPro[1], _probImg, 1./255.0);
 	multiply(backPro[2], _probImg, _probImg, 1./255.0);
 	if(useDepth)
-		multiply(backPro[3], _probImg, _probImg, 1, CV_8UC1);
+		multiply(backPro[3], _probImg, _probImg, 1./255.0, CV_8UC1);
 }
 
 void HDcolorModel::createColorModel(Mat &_rgbImg, Mat & _depthImg, Mat & _mask) {
