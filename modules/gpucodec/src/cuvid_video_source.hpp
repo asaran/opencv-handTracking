@@ -7,11 +7,12 @@
 //  copy or use the software.
 //
 //
-//                           License Agreement
+//                          License Agreement
 //                For Open Source Computer Vision Library
 //
 // Copyright (C) 2000-2008, Intel Corporation, all rights reserved.
 // Copyright (C) 2009, Willow Garage Inc., all rights reserved.
+// Copyright (C) 2013, OpenCV Foundation, all rights reserved.
 // Third party copyrights are property of their respective owners.
 //
 // Redistribution and use in source and binary forms, with or without modification,
@@ -40,43 +41,47 @@
 //
 //M*/
 
-#ifndef __FFMPEG_VIDEO_SOURCE_H__
-#define __FFMPEG_VIDEO_SOURCE_H__
+#ifndef __CUVID_VIDEO_SOURCE_HPP__
+#define __CUVID_VIDEO_SOURCE_HPP__
 
+#include <nvcuvid.h>
+
+#include "opencv2/core/private.gpu.hpp"
 #include "opencv2/gpucodec.hpp"
-#include "thread.h"
+#include "video_source.hpp"
 
-struct InputMediaStream_FFMPEG;
+namespace cv { namespace gpucodec { namespace detail
+{
 
-namespace cv { namespace gpu { namespace detail {
-
-class FFmpegVideoSource : public VideoReader_GPU::VideoSource
+class CuvidVideoSource : public VideoSource
 {
 public:
-    FFmpegVideoSource(const String& fname);
+    explicit CuvidVideoSource(const String& fname);
+    ~CuvidVideoSource();
 
-    VideoReader_GPU::FormatInfo format() const;
+    FormatInfo format() const;
     void start();
     void stop();
     bool isStarted() const;
     bool hasError() const;
 
 private:
-    VideoReader_GPU::FormatInfo format_;
+    // Callback for handling packages of demuxed video data.
+    //
+    // Parameters:
+    //      pUserData - Pointer to user data. We must pass a pointer to a
+    //          VideoSourceData struct here, that contains a valid CUvideoparser
+    //          and FrameQueue.
+    //      pPacket - video-source data packet.
+    //
+    // NOTE: called from a different thread that doesn't not have a cuda context
+    //
+    static int CUDAAPI HandleVideoData(void* pUserData, CUVIDSOURCEDATAPACKET* pPacket);
 
-    cv::Ptr<InputMediaStream_FFMPEG> stream_;
-
-    cv::Ptr<Thread> thread_;
-    volatile bool stop_;
-    volatile bool hasError_;
-
-    static void readLoop(void* userData);
+    CUvideosource videoSource_;
+    FormatInfo format_;
 };
 
 }}}
 
-namespace cv {
-    template <> void Ptr<InputMediaStream_FFMPEG>::delete_obj();
-}
-
-#endif // __FFMPEG_VIDEO_SOURCE_H__
+#endif // __CUVID_VIDEO_SOURCE_HPP__

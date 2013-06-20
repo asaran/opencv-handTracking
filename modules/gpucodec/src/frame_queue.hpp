@@ -7,11 +7,12 @@
 //  copy or use the software.
 //
 //
-//                           License Agreement
+//                          License Agreement
 //                For Open Source Computer Vision Library
 //
 // Copyright (C) 2000-2008, Intel Corporation, all rights reserved.
 // Copyright (C) 2009, Willow Garage Inc., all rights reserved.
+// Copyright (C) 2013, OpenCV Foundation, all rights reserved.
 // Third party copyrights are property of their respective owners.
 //
 // Redistribution and use in source and binary forms, with or without modification,
@@ -40,72 +41,58 @@
 //
 //M*/
 
-#ifndef __VIDEO_DECODER_H__
-#define __VIDEO_DECODER_H__
+#ifndef __FRAME_QUEUE_HPP__
+#define __FRAME_QUEUE_HPP__
 
-#include "opencv2/core/gpu_private.hpp"
-#include "opencv2/gpucodec.hpp"
+#include "opencv2/core/utility.hpp"
+#include "opencv2/core/private.gpu.hpp"
 
 #include <nvcuvid.h>
 
-namespace cv { namespace gpu { namespace detail
+namespace cv { namespace gpucodec { namespace detail
 {
 
-class VideoDecoder
+class FrameQueue
 {
 public:
-    VideoDecoder(const VideoReader_GPU::FormatInfo& videoFormat, CUvideoctxlock lock) : lock_(lock), decoder_(0)
-    {
-        create(videoFormat);
-    }
+    static const int MaximumSize = 20; // MAX_FRM_CNT;
 
-    ~VideoDecoder()
-    {
-        release();
-    }
+    FrameQueue();
 
-    void create(const VideoReader_GPU::FormatInfo& videoFormat);
-    void release();
+    void endDecode() { endOfDecode_ = true; }
+    bool isEndOfDecode() const { return endOfDecode_ != 0;}
 
-    // Get the code-type currently used.
-    cudaVideoCodec codec() const { return createInfo_.CodecType; }
-    unsigned long maxDecodeSurfaces() const { return createInfo_.ulNumDecodeSurfaces; }
+    // Spins until frame becomes available or decoding gets canceled.
+    // If the requested frame is available the method returns true.
+    // If decoding was interupted before the requested frame becomes
+    // available, the method returns false.
+    bool waitUntilFrameAvailable(int pictureIndex);
 
-    unsigned long frameWidth() const { return createInfo_.ulWidth; }
-    unsigned long frameHeight() const { return createInfo_.ulHeight; }
+    void enqueue(const CUVIDPARSERDISPINFO* picParams);
 
-    unsigned long targetWidth() const { return createInfo_.ulTargetWidth; }
-    unsigned long targetHeight() const { return createInfo_.ulTargetHeight; }
+    // Deque the next frame.
+    // Parameters:
+    //      displayInfo - New frame info gets placed into this object.
+    // Returns:
+    //      true, if a new frame was returned,
+    //      false, if the queue was empty and no new frame could be returned.
+    bool dequeue(CUVIDPARSERDISPINFO& displayInfo);
 
-    cudaVideoChromaFormat chromaFormat() const { return createInfo_.ChromaFormat; }
-
-    bool decodePicture(CUVIDPICPARAMS* picParams)
-    {
-        return cuvidDecodePicture(decoder_, picParams) == CUDA_SUCCESS;
-    }
-
-    cv::gpu::GpuMat mapFrame(int picIdx, CUVIDPROCPARAMS& videoProcParams)
-    {
-        CUdeviceptr ptr;
-        unsigned int pitch;
-
-        cuSafeCall( cuvidMapVideoFrame(decoder_, picIdx, &ptr, &pitch, &videoProcParams) );
-
-        return GpuMat(targetHeight() * 3 / 2, targetWidth(), CV_8UC1, (void*) ptr, pitch);
-    }
-
-    void unmapFrame(cv::gpu::GpuMat& frame)
-    {
-        cuSafeCall( cuvidUnmapVideoFrame(decoder_, (CUdeviceptr) frame.data) );
-        frame.release();
-    }
+    void releaseFrame(const CUVIDPARSERDISPINFO& picParams) { isFrameInUse_[picParams.picture_index] = false; }
 
 private:
-    CUvideoctxlock lock_;
-    CUVIDDECODECREATEINFO createInfo_;
-    CUvideodecoder        decoder_;
+    bool isInUse(int pictureIndex) const { return isFrameInUse_[pictureIndex] != 0; }
+
+    Mutex mtx_;
+
+    volatile int isFrameInUse_[MaximumSize];
+    volatile int endOfDecode_;
+
+    int framesInQueue_;
+    int readPosition_;
+    CUVIDPARSERDISPINFO displayQueue_[MaximumSize];
 };
 
 }}}
 
-#endif // __VIDEO_DECODER_H__
+#endif // __FRAME_QUEUE_HPP__

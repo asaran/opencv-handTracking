@@ -7,11 +7,12 @@
 //  copy or use the software.
 //
 //
-//                           License Agreement
+//                          License Agreement
 //                For Open Source Computer Vision Library
 //
 // Copyright (C) 2000-2008, Intel Corporation, all rights reserved.
 // Copyright (C) 2009, Willow Garage Inc., all rights reserved.
+// Copyright (C) 2013, OpenCV Foundation, all rights reserved.
 // Third party copyrights are property of their respective owners.
 //
 // Redistribution and use in source and binary forms, with or without modification,
@@ -40,17 +41,17 @@
 //
 //M*/
 
-#ifndef __VIDEO_PARSER_H__
-#define __VIDEO_PARSER_H__
-
-#include "opencv2/core/gpu_private.hpp"
-#include "opencv2/gpucodec.hpp"
-#include "frame_queue.h"
-#include "video_decoder.h"
+#ifndef __VIDEO_PARSER_HPP__
+#define __VIDEO_PARSER_HPP__
 
 #include <nvcuvid.h>
 
-namespace cv { namespace gpu { namespace detail
+#include "opencv2/core/private.gpu.hpp"
+#include "opencv2/gpucodec.hpp"
+#include "frame_queue.hpp"
+#include "video_decoder.hpp"
+
+namespace cv { namespace gpucodec { namespace detail
 {
 
 class VideoParser
@@ -91,4 +92,4 @@ private:
 
 }}}
 
-#endif // __VIDEO_PARSER_H__
+#endif // __VIDEO_PARSER_HPP__

@@ -437,7 +437,7 @@ public:
         GpuMat dclassified(1, 1, CV_32S);
         cudaSafeCall( cudaMemcpy(dclassified.ptr(), &classified, sizeof(int), cudaMemcpyHostToDevice) );
 
-        PyrLavel level(0, 1.0f, image.size(), NxM, minObjectSize);
+        PyrLavel level(0, scaleFactor, image.size(), NxM, minObjectSize);
 
         while (level.isFeasible(maxObjectSize))
         {
@@ -458,7 +458,7 @@ public:
 
                 // generate integral for scale
                 gpu::resize(image, src, level.sFrame, 0, 0, cv::INTER_LINEAR);
-                gpu::integralBuffered(src, sint, buff);
+                gpu::integral(src, sint, buff);
 
                 // calculate job
                 int totalWidth = level.workArea.width / step;

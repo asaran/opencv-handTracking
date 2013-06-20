@@ -172,15 +172,16 @@ namespace
             return;
         }
 
-        gpu::ConvolveBuf convolve_buf;
-        convolve_buf.user_block_size = buf.user_block_size;
+        Ptr<gpu::Convolution> conv = gpu::createConvolution(buf.user_block_size);
 
         if (image.channels() == 1)
-            gpu::convolve(image.reshape(1), templ.reshape(1), result, true, convolve_buf, stream);
+        {
+            conv->convolve(image.reshape(1), templ.reshape(1), result, true, stream);
+        }
         else
         {
             GpuMat result_;
-            gpu::convolve(image.reshape(1), templ.reshape(1), result_, true, convolve_buf, stream);
+            conv->convolve(image.reshape(1), templ.reshape(1), result_, true, stream);
             extractFirstChannel_32F(result_, result, image.channels(), StreamAccessor::getStream(stream));
         }
     }
@@ -196,16 +197,9 @@ namespace
             return;
         }
 
-        if (stream)
-        {
-            stream.enqueueConvert(image, buf.imagef, CV_32F);
-            stream.enqueueConvert(templ, buf.templf, CV_32F);
-        }
-        else
-        {
-            image.convertTo(buf.imagef, CV_32F);
-            templ.convertTo(buf.templf, CV_32F);
-        }
+        image.convertTo(buf.imagef, CV_32F, stream);
+        templ.convertTo(buf.templf, CV_32F, stream);
+
         matchTemplate_CCORR_32F(buf.imagef, buf.templf, result, buf, stream);
     }
 
@@ -275,7 +269,7 @@ namespace
             buf.image_sums.resize(1);
             gpu::integral(image, buf.image_sums[0], stream);
 
-            unsigned int templ_sum = (unsigned int)sum(templ)[0];
+            unsigned int templ_sum = (unsigned int)gpu::sum(templ)[0];
             matchTemplatePrepared_CCOFF_8U(templ.cols, templ.rows, buf.image_sums[0], templ_sum, result, StreamAccessor::getStream(stream));
         }
         else
@@ -317,16 +311,8 @@ namespace
     void matchTemplate_CCOFF_NORMED_8U(
             const GpuMat& image, const GpuMat& templ, GpuMat& result, MatchTemplateBuf &buf, Stream& stream)
     {
-        if (stream)
-        {
-            stream.enqueueConvert(image, buf.imagef, CV_32F);
-            stream.enqueueConvert(templ, buf.templf, CV_32F);
-        }
-        else
-        {
-            image.convertTo(buf.imagef, CV_32F);
-            templ.convertTo(buf.templf, CV_32F);
-        }
+        image.convertTo(buf.imagef, CV_32F, stream);
+        templ.convertTo(buf.templf, CV_32F, stream);
 
         matchTemplate_CCORR_32F(buf.imagef, buf.templf, result, buf, stream);
 

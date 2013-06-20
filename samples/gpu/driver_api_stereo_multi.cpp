@@ -25,7 +25,7 @@
 #  endif
 #endif
 
-#if !defined(HAVE_CUDA) || !defined(HAVE_TBB)
+#if !defined(HAVE_CUDA) || !defined(HAVE_TBB) || defined(__arm__)
 
 int main()
 {
@@ -35,6 +35,10 @@ int main()
 
 #if !defined(HAVE_TBB)
     std::cout << "TBB support is required (CMake key 'WITH_TBB' must be true).\n";
+#endif
+
+#if defined(__arm__)
+    std::cout << "Unsupported for ARM CUDA library." << std::endl;
 #endif
 
     return 0;
@@ -112,8 +116,8 @@ int main(int argc, char** argv)
         if (!dev_info.isCompatible())
         {
             std::cout << "GPU module isn't built for GPU #" << i << " ("
-                 << dev_info.name() << ", CC " << dev_info.majorVersion()
-                 << dev_info.minorVersion() << "\n";
+                 << dev_info.name() << ", CC " << dev_info.major()
+                 << dev_info.minor() << "\n";
             return -1;
         }
     }
