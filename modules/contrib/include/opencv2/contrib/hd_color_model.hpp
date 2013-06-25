@@ -40,11 +40,10 @@
 //
 //M*/
 
-#ifndef _HDCOLORMODEL_HPP_
-#define _HDCOLORMODEL_HPP_
+#ifndef _HDHISTBACKPROJ_HPP_
+#define _HDHISTBACKPROJ_HPP_
 
 #include <opencv2/contrib/hand_detector.hpp>
-#include "opencv2/core.hpp"
 #include <vector>
 
 using namespace std;
@@ -52,52 +51,61 @@ using namespace std;
 namespace cv {
 namespace HT {
 
-class CV_EXPORTS HDcolorModel: public HandDetector {
-protected:
-
-	static const unsigned int intParamsN = 7;
-	static const unsigned int doubleParamsN = 8;
-
-	// specifies if the depth is to be used
-	bool useDepth;
-	// specifies if the params have been initialized
-	bool paramInit;
-	// specifies if the detector has been initialized
-	bool detectorInit;
-	// specifies the number of bins to be used for histogram - for each channel
-	int noOfBins[4];
-	// defines range for histograms
-	float histRange[4][2];//, histRange1[2], histRange2[2];
-	// specifies the size of the input frame
-	Size frameSize;
-
-	// container for histograms RGB-D
-	MatND hist[4];
-	// containers for backprojected images
-	Mat backPro[4];
-
-	/*-----------------Member functions-----------------------*/
-	// function to create color model - histogram models
-	void createColorModel(Mat & _rgbImg, Mat & _depthImg, Mat & _mask);
-
+class CV_EXPORTS HistBackProj: public HandDetector {
 public:
-	// default destructor
-	virtual ~HDcolorModel() { }
-	// default constructor
-	HDcolorModel(void);
-	// constructor with noOfBins specified
-	HDcolorModel(vector<int> noOfBins, bool _useDepth);
+    // Structure for storing parameters required
+    struct CV_EXPORTS_W_SIMPLE Params {
+        // specifies the number of bins to be used for histogram - for each channel
+        CV_PROP_RW int noOfBins[4];
+        // defines range for histograms
+        CV_PROP_RW float histRange[4][2];
+        // specifies the size of the input frame
+        CV_PROP_RW Size frameSize;
+        // color code used for conversion ; use -1 for no conversion ; default COLOR_BGR2HSV
+        CV_PROP_RW int colorCode;
 
-	// constructor to initialize the detector object
-	virtual bool initialize(Mat & _rgbImg, Mat & _depthImg, Mat & _mask, bool _useDepth);
-	// actual function to detect hand - right now just gives probability image - might be changed to bounding box output
-	virtual void detect(Mat & _rgbImg, Mat & _depthImg, OutputArray probImg);
-	// function to get param values
-	virtual void getParams(vector<int> intParams, vector<double> doubleParams) const;
-	// function to set param values
-	virtual void setParams(vector<int> intParams, vector<double> doubleParams);
+        CV_WRAP Params();
+
+        void read( const FileNode& fn );
+        void write( FileStorage& fs ) const;
+    };
+
+    /*-----------------Member functions-----------------------*/
+    // default destructor
+    virtual ~HistBackProj() { }
+    // default constructor
+    CV_WRAP HistBackProj(const HistBackProj::Params &parameters = (HistBackProj::Params()));
+
+    // constructor to initialize the detector object
+    virtual bool initialize(Mat & _rgbImg, Mat & _depthImg, Mat & _mask,bool _useColor, bool _useDepth);
+    // actual function to detect hand - right now just gives probability image - might be changed to bounding box output
+    virtual void detect(Mat & _rgbImg, Mat & _depthImg, OutputArray probImg);
+
+protected:
+    // specifies if the params have been initialized
+    bool paramInit;
+    // specifies if the detector has been initialized
+    bool detectorInit;
+    // specifies if the depth is to be used
+    bool useDepth;
+    // specifies if the color is to be used
+    bool useColor;
+    // Parameters for list
+    Params params;
+    // container for histograms RGB-D
+    MatND hist[4];
+    // containers for backprojected images
+    Mat backPro[4];
+    // image for internal calc
+    Mat img;
+
+
+    /*-----------------Member functions-----------------------*/
+    // function to create color model - histogram models
+    void createColorModel(Mat & _rgbImg, Mat & _depthImg, Mat & _mask);
 };
 
 }
 }
 #endif
+

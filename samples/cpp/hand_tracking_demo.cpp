@@ -1,4 +1,5 @@
 #include <opencv2/contrib/hd_color_model.hpp>
+#include <opencv2/contrib/hand_detector.hpp>
 #include <string>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/core/core.hpp>
@@ -23,7 +24,7 @@ pair<int, int> searchNearestPixel(const Mat &depth, Rect &region);
 void processNeighbor(int &pixelcount, double &mean, cv::Mat &mask, const short first, const short second, const cv::Mat &depth);
 void mouse_callback(int event,int x,int y,int ,void* param);
 
-class gpCapture {
+class CV_EXPORTS gpCapture {
 public:
     VideoCapture cap;
     VideoCapture cap1;
@@ -150,10 +151,11 @@ int main(int argc, char *argv[]) {
     //extra number used to define no. of bins for depth histogram
     noOfBins[3] = 256;
 
-    //HDcolorModel object used for color-based histogram backprojection method
-    HT::HDcolorModel dt(noOfBins, use_depth);
+    //HistBackProj object used for color-based histogram backprojection method
+    //HT::HistBackProj dt;
+    Ptr<HT::HandDetector> dt = new HT::HistBackProj();
     //initialialize dt with initial input images
-    dt.initialize(capture.rgbImg, capture.depthMap, mask, use_depth);
+    dt->initialize(capture.rgbImg, capture.depthMap, mask, true, use_depth);
 
     //probability output image
     Mat probImg, probImgRGB;
@@ -165,7 +167,7 @@ int main(int argc, char *argv[]) {
     //Main loop where detection is taking place
     while(capture.update()) {
         //detect is the main function which performs detection
-        dt.detect(capture.rgbImg, capture.depthMap, probImg);
+        dt->detect(capture.rgbImg, capture.depthMap, probImg);
 
         //display input rgb image and output probability image
         capture.rgbImg.copyTo(temp1);
@@ -349,3 +351,4 @@ void mouse_callback(int event,int x,int y,int ,void* param) {
     }
 
 }
+
