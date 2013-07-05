@@ -86,6 +86,7 @@ const String keys =
         "{help h usage ? |      | print this message   }"
         "{kinect         |0     | use kinect           }"
         "{@path          |.     | path to dataset      }"
+        "{color          |1     | use color            }"
         "{depth          |0     | use depth            }"
         ;
 
@@ -109,6 +110,10 @@ int main(int argc, char *argv[]) {
     //specifies if depth have to be used
     bool use_depth = false;
     use_depth = parser.get<int>("depth");
+
+    //specifies if color info is to be used
+    bool use_color = false;
+    use_color = parser.get<int>("color");
 
     //opens up a VideoCapture object according to the options
     if(use_kinect == true)
@@ -153,9 +158,12 @@ int main(int argc, char *argv[]) {
 
     //HistBackProj object used for color-based histogram backprojection method
     //HT::HistBackProj dt;
-    Ptr<HT::HandDetector> dt = new HT::HistBackProj();
-    //initialialize dt with initial input images
-    dt->initialize(capture.rgbImg, capture.depthMap, mask, true, use_depth);
+    HT::HistBackProj::Params params;
+    params.useColor = use_color;
+    params.useDepth = use_depth;
+    Ptr<HT::HandDetector> dt = new HT::HistBackProj(params);
+    //train dt with initial input images
+    dt->train(capture.rgbImg, capture.depthMap, mask, false);
 
     //probability output image
     Mat probImg, probImgRGB;

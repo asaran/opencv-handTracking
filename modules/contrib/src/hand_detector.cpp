@@ -40,37 +40,17 @@
 //
 //M*/
 
-#ifndef _HANDDETECTOR_HPP_
-#define _HANDDETECTOR_HPP_
-
-#include <vector>
-#include <opencv2/core.hpp>
-#include <algorithm>
-
-using namespace std;
+#include <precomp.hpp>
+#include <opencv2/contrib/hand_detector.hpp>
 
 namespace cv {
 namespace HT {
 
-//Base class for Detector module. Defines bare minimum for derived classes to provide common interface
 
-//Initialization of all detectors must be done using a mask which the user has to provide. */
-
-class CV_EXPORTS HandDetector {
-protected:
-
-public:
-    //function to create hand detector of any type
-    CV_WRAP static Ptr<HandDetector> create( const String& detectorType );
-    //train method - returns true if training successful. Each detector class may define overloaded functions according to different needs.
-    virtual bool train(Mat & _rgbImg, Mat & _depthImg, Mat & _mask, bool incremental) = 0;
-    //Detect function to be called in the video loop for subsequent detection of the hand
-    virtual void detect(Mat & _rgbImg, Mat & _depthImg, OutputArray probImg) = 0;
-    //Virtual Destructor for HandDetector class
-    virtual ~HandDetector() { }
-};
+CV_WRAP static Ptr<HandDetector> create( const String& detectorType ) {
+    return Algorithm::create<HandDetector>(detectorType);
+}
 
 }
 }
-#endif
 

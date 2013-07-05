@@ -60,9 +60,13 @@ public:
         // defines range for histograms
         CV_PROP_RW float histRange[4][2];
         // specifies the size of the input frame
-        CV_PROP_RW Size frameSize;
+        //CV_PROP_RW Size frameSize;
         // color code used for conversion ; use -1 for no conversion ; default COLOR_BGR2HSV
         CV_PROP_RW int colorCode;
+        // specifies if the depth is to be used
+        CV_PROP_RW bool useDepth;
+        // specifies if the color is to be used
+        CV_PROP_RW bool useColor;
 
         CV_WRAP Params();
 
@@ -77,32 +81,33 @@ public:
     CV_WRAP HistBackProj(const HistBackProj::Params &parameters = (HistBackProj::Params()));
 
     // constructor to initialize the detector object
-    virtual bool initialize(Mat & _rgbImg, Mat & _depthImg, Mat & _mask,bool _useColor, bool _useDepth);
+    virtual bool train(Mat & _rgbImg, Mat & _depthImg, Mat & _mask, bool incremantal = false);
     // actual function to detect hand - right now just gives probability image - might be changed to bounding box output
     virtual void detect(Mat & _rgbImg, Mat & _depthImg, OutputArray probImg);
 
 protected:
     // specifies if the params have been initialized
-    bool paramInit;
+    //bool paramInit;
     // specifies if the detector has been initialized
     bool detectorInit;
-    // specifies if the depth is to be used
-    bool useDepth;
-    // specifies if the color is to be used
-    bool useColor;
     // Parameters for list
     Params params;
     // container for histograms RGB-D
     MatND hist[4];
+    MatND histTemp[4];
+    // no. of Images trained on till now
+    unsigned int noOfImages;
     // containers for backprojected images
     Mat backPro[4];
     // image for internal calc
     Mat img;
+    // Output Img
+    Mat probImg;
 
 
     /*-----------------Member functions-----------------------*/
     // function to create color model - histogram models
-    void createColorModel(Mat & _rgbImg, Mat & _depthImg, Mat & _mask);
+    void createColorModel(Mat & _rgbImg, Mat & _depthImg, Mat & _mask, bool incremental);
 };
 
 }

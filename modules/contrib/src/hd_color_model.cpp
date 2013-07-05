@@ -40,7 +40,7 @@
 //
 //M*/
 
-//#include <precomp.hpp>
+#include <precomp.hpp>
 #include <opencv2/contrib/hd_color_model.hpp>
 #include <vector>
 
@@ -57,9 +57,11 @@ float def_vranges[] = {0, 256};
 float def_dranges[] = {400, 7000};     // approx. to be replaced with exact value
 
 HistBackProj::HistBackProj(const HistBackProj::Params &parameters) : params(parameters) {
-    useColor = true;
-    useDepth = false;
-    paramInit = true;
+    //useColor = true;
+    //useDepth = false;
+    //paramInit = true;
+    CV_Assert(params.useColor || params.useDepth);
+    noOfImages = 0;
     detectorInit = false;
 }
 
@@ -70,7 +72,6 @@ HistBackProj::Params::Params() {
         noOfBins[i] = def_noOfBins[i];
     }
     noOfBins[3] = 0;
-    frameSize = Size(0, 0);
     histRange[0][0] = def_hranges[0];
     histRange[0][1] = def_hranges[1];
     histRange[1][0] = def_sranges[0];
@@ -80,16 +81,16 @@ HistBackProj::Params::Params() {
     histRange[3][0] = def_dranges[0];
     histRange[3][1] = def_dranges[1];
     colorCode = COLOR_BGR2HSV;
+    useColor = true;
+    useDepth = false;
 }
 
+// read params from a file
 void HistBackProj::Params::read(const FileNode& fn) {
     noOfBins[0] = fn["noOfBins[0]"];
     noOfBins[1] = fn["noOfBins[1]"];
     noOfBins[2] = fn["noOfBins[2]"];
     noOfBins[3] = fn["noOfBins[3]"];
-
-    frameSize.height = fn["frameSize.height"];
-    frameSize.width = fn["frameSize.width"];
 
     histRange[0][0] = fn["histRange[0][0]"];
     histRange[0][1] = fn["histRange[0][1]"];
@@ -101,16 +102,16 @@ void HistBackProj::Params::read(const FileNode& fn) {
     histRange[3][1] = fn["histRange[3][1]"];
 
     colorCode = fn["colorCode"];
+    useColor = (int)fn["useColor"] > 0 ? true : false;
+    useDepth = (int)fn["useDepth"] > 0 ? true : false;
 }
 
+// write params to a file
 void HistBackProj::Params::write( FileStorage& fs ) const {
     fs << "noOfBins[0]" << noOfBins[0];
     fs << "noOfBins[1]" << noOfBins[1];
     fs << "noOfBins[2]" << noOfBins[2];
     fs << "noOfBins[3]" << noOfBins[3];
-
-    fs << "frameSize.heigth" << frameSize.height;
-    fs << "frameSize.width" << frameSize.width;
 
     fs << "histRange[0][0]" << histRange[0][0];
     fs << "histRange[0][1]" << histRange[0][1];
@@ -122,28 +123,30 @@ void HistBackProj::Params::write( FileStorage& fs ) const {
     fs << "histRange[3][1]" << histRange[3][1];
 
     fs << "colorCode" << colorCode;
+    fs << "useColor" << (int)useColor;
+    fs << "useDepth" << (int)useDepth;
 }
 
-bool HistBackProj::initialize(Mat & _rgbImg, Mat & _depthImg, Mat & _mask, bool _useColor, bool _useDepth) {
-    CV_Assert(_rgbImg.type() == CV_8UC3 && _mask.type() == CV_8UC1);
-
-    useDepth = _useDepth;
-    useColor = _useColor;
-
-    if(useDepth) {
+// training method for HistBackProj. Calculates histograms using the input data and averages out the histograms
+// if incremental is true
+bool HistBackProj::train(Mat & _rgbImg, Mat & _depthImg, Mat & _mask, bool incremental) {
+    if(params.useColor) {
+        CV_Assert(_rgbImg.type() == CV_8UC3 && _mask.type() == CV_8UC1);
+    }
+    if(params.useDepth) {
         CV_Assert(_depthImg.type() == CV_16UC1);
         CV_Assert(_rgbImg.size() == _depthImg.size());
     }
 
-    if(paramInit) {
-        createColorModel(_rgbImg, _depthImg, _mask);
-    }
-
+    //if(paramInit) {
+    createColorModel(_rgbImg, _depthImg, _mask, incremental);
+    //}
+    probImg = Mat(_rgbImg.size(), CV_32F, Scalar(0.0));
     return detectorInit;
 }
 
 void HistBackProj::detect(Mat & _rgbImg, Mat & _depthImg, OutputArray _probImg) {
-    CV_Assert(detectorInit == true && "Detector not initialized yet. Please call initialize(...) first\n");
+    CV_Assert(detectorInit == true && "Detector not initialized yet. Please call train(...) first\n");
 
     if(params.colorCode < 0)
         _rgbImg.copyTo(img);
@@ -152,24 +155,28 @@ void HistBackProj::detect(Mat & _rgbImg, Mat & _depthImg, OutputArray _probImg) 
 
     const float* range[] = {params.histRange[0], params.histRange[1], params.histRange[2], params.histRange[3]};
 
-    if(useColor) {
+    if(params.useColor) {
         vector<Mat> channel;
         split(img, channel);
         calcBackProject(&channel[0], 1, 0, hist[0], backPro[0], range);
         calcBackProject(&channel[1], 1, 0, hist[1], backPro[1], range+1);
         calcBackProject(&channel[2], 1, 0, hist[2], backPro[2], range+2);
 
-        multiply(backPro[0], backPro[1], _probImg, 1./255.0);
-        multiply(backPro[2], _probImg, _probImg, 1./255.0);
+        multiply(backPro[0], backPro[1], probImg, 1./255.0, CV_32F);
+        multiply(backPro[2], probImg, probImg, 1./255.0, CV_32F);
     }
 
-    if(useDepth) {
+    if(params.useDepth) {
         calcBackProject(&_depthImg, 1, 0, hist[3], backPro[3], range+3);
-        multiply(backPro[3], _probImg, _probImg, 1./255.0, CV_8UC1);
+        if(params.useColor)
+            multiply(backPro[3], probImg, probImg, 1./255.0, CV_32F);
+        else
+            backPro[3].convertTo(probImg, CV_32F);
     }
+    probImg.convertTo(_probImg, CV_8U);
 }
 
-void HistBackProj::createColorModel(Mat &_rgbImg, Mat & _depthImg, Mat & _mask) {
+void HistBackProj::createColorModel(Mat &_rgbImg, Mat & _depthImg, Mat & _mask, bool incremental) {
     if(params.colorCode < 0)
         _rgbImg.copyTo(img);
     else
@@ -177,18 +184,30 @@ void HistBackProj::createColorModel(Mat &_rgbImg, Mat & _depthImg, Mat & _mask) 
 
     const float* range[] = {params.histRange[0], params.histRange[1], params.histRange[2], params.histRange[3]};
 
-    if(useColor) {
+    if(params.useColor) {
         vector<Mat> channel;
         split(img, channel);
-        calcHist(&channel[0], 1, 0, _mask, hist[0], 1, &params.noOfBins[0], range);
-        calcHist(&channel[1], 1, 0, _mask, hist[1], 1, &params.noOfBins[1], range+1);
-        calcHist(&channel[2], 1, 0, _mask, hist[2], 1, &params.noOfBins[2], range+2);
+        calcHist(&channel[0], 1, 0, _mask, histTemp[0], 1, &params.noOfBins[0], range);
+        calcHist(&channel[1], 1, 0, _mask, histTemp[1], 1, &params.noOfBins[1], range+1);
+        calcHist(&channel[2], 1, 0, _mask, histTemp[2], 1, &params.noOfBins[2], range+2);
     }
 
-    if(useDepth) {
-        calcHist(&_depthImg, 1, 0, _mask, hist[3], 1, &params.noOfBins[2], range+3);
+    if(params.useDepth) {
+        calcHist(&_depthImg, 1, 0, _mask, histTemp[3], 1, &params.noOfBins[2], range+3);
     }
 
+    if(!incremental || noOfImages == 0) {
+        for(int i=0; i<4; i++)
+            histTemp[i].copyTo(hist[i]);
+        noOfImages = 1;
+    }
+    else {
+        for(int i=0; i<4; i++) {
+            hist[i] = ((float)noOfImages*hist[i] + histTemp[i]);
+            hist[i] = hist[i]/(float)(noOfImages+1);
+        }
+        noOfImages++;
+    }
     detectorInit = true;
 }
 }
