@@ -61,7 +61,7 @@ protected:
 
 public:
     //function to create hand detector of any type
-    CV_WRAP static Ptr<HandDetector> create( const String& detectorType );
+    //CV_WRAP static Ptr<HandDetector> create( const String& detectorType );
     //train method - returns true if training successful. Each detector class may define overloaded functions according to different needs.
     virtual bool train(Mat & _rgbImg, Mat & _depthImg, Mat & _mask, bool incremental) = 0;
     //Detect function to be called in the video loop for subsequent detection of the hand

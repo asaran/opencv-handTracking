@@ -47,9 +47,9 @@ namespace cv {
 namespace HT {
 
 
-CV_WRAP static Ptr<HandDetector> create( const String& detectorType ) {
+/*CV_WRAP Ptr<HandDetector> HandDetector::create( const String& detectorType ) {
     return Algorithm::create<HandDetector>(detectorType);
-}
+}*/
 
 }
 }
