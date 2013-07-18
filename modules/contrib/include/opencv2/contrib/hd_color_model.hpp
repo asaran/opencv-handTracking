@@ -84,6 +84,10 @@ public:
     virtual bool train(Mat & _rgbImg, Mat & _depthImg, Mat & _mask, bool incremantal = false);
     // actual function to detect hand - right now just gives probability image - might be changed to bounding box output
     virtual void detect(Mat & _rgbImg, Mat & _depthImg, OutputArray probImg);
+    // load model from xml file
+    virtual bool load(const String &fileNamePrefix);
+    // save model to a file
+    virtual bool save(const String &fileNamePrefix);
 
 protected:
     // specifies if the params have been initialized

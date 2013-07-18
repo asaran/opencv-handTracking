@@ -176,6 +176,40 @@ void HistBackProj::detect(Mat & _rgbImg, Mat & _depthImg, OutputArray _probImg) 
     probImg.convertTo(_probImg, CV_8U);
 }
 
+bool HistBackProj::load(const String &fileNamePrefix) {
+    FileStorage fs;
+    CV_Assert(fs.open(fileNamePrefix + "info.xml", FileStorage::READ) && "Could not open file");
+    params.read(fs);
+    fs.release();
+
+    CV_Assert(fs.open(fileNamePrefix + "hist.xml", FileStorage::READ) && "Could not open file");
+    if(params.useColor) {
+        fs["hist[0]"] >> hist[0];
+        fs["hist[1]"] >> hist[1];
+        fs["hist[2]"] >> hist[2];
+    }
+    if(params.useDepth)
+        fs["hist[3]"] >> hist[3];
+    return true;
+}
+
+bool HistBackProj::save(const String &fileNamePrefix) {
+    FileStorage fs;
+    CV_Assert(fs.open(fileNamePrefix + "info.xml", FileStorage::WRITE) && "Could not open file");
+    params.write(fs);
+    fs.release();
+
+    CV_Assert(fs.open(fileNamePrefix + "hist.xml", FileStorage::WRITE) && "Could not open file");
+    if(params.useColor) {
+        fs << "hist[0]" << hist[0];
+        fs << "hist[1]" << hist[1];
+        fs << "hist[2]" << hist[2];
+    }
+    if(params.useDepth)
+        fs << "hist[3]" << hist[3];
+    return true;
+}
+
 void HistBackProj::createColorModel(Mat &_rgbImg, Mat & _depthImg, Mat & _mask, bool incremental) {
     if(params.colorCode < 0)
         _rgbImg.copyTo(img);

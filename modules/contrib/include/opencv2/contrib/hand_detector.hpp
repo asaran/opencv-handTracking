@@ -45,6 +45,14 @@
 
 #include <vector>
 #include <opencv2/core.hpp>
+#include <opencv2/imgproc.hpp>
+#include <opencv2/features2d.hpp>
+#include <opencv2/highgui.hpp>
+#include <opencv2/video.hpp>
+#include <opencv2/ml.hpp>
+#include <opencv2/nonfree.hpp>
+#include <opencv2/objdetect.hpp>
+#include <opencv2/core/utility.hpp>
 #include <algorithm>
 
 using namespace std;
@@ -66,6 +74,10 @@ public:
     virtual bool train(Mat & _rgbImg, Mat & _depthImg, Mat & _mask, bool incremental) = 0;
     //Detect function to be called in the video loop for subsequent detection of the hand
     virtual void detect(Mat & _rgbImg, Mat & _depthImg, OutputArray probImg) = 0;
+    //Load a detector from a file
+    virtual bool load(const String &fileNamePrefix) = 0;
+    //Save a detector to a file
+    virtual bool save(const String &fileNamePrefix) = 0;
     //Virtual Destructor for HandDetector class
     virtual ~HandDetector() { }
 };
