@@ -1,0 +1,241 @@
+//*M///////////////////////////////////////////////////////////////////////////////////////
+//
+//  IMPORTANT: READ BEFORE DOWNLOADING, COPYING, INSTALLING OR USING.
+//
+//  By downloading, copying, installing or using the software you agree to this license.
+//  If you do not agree to this license, do not download, install,
+//  copy or use the software.
+//
+//
+//                                License Agreement
+//                       For Open Source Computer Vision Library
+//
+// Copyright (C) 2000-2008, Intel Corporation, all rights reserved.
+// Copyright (C) 2008-2011, Willow Garage Inc., all rights reserved.
+// Third party copyrights are property of their respective owners.
+//
+// Redistribution and use in source and binary forms, with or without modification,
+// are permitted provided that the following conditions are met:
+//
+//   * Redistribution's of source code must retain the above copyright notice,
+//     this list of conditions and the following disclaimer.
+//
+//   * Redistribution's in binary form must reproduce the above copyright notice,
+//     this list of conditions and the following disclaimer in the documentation
+//     and/or other materials provided with the distribution.
+//
+//   * The name of Intel Corporation may not be used to endorse or promote products
+//     derived from this software without specific prior written permission.
+//
+// This software is provided by the copyright holders and contributors "as is" and
+// any express or implied warranties, including, but not limited to, the implied
+// warranties of merchantability and fitness for a particular purpose are disclaimed.
+// In no event shall the Intel Corporation or contributors be liable for any direct,
+// indirect, incidental, special, exemplary, or consequential damages
+// (including, but not limited to, procurement of substitute goods or services;
+// loss of use, data, or profits; or business interruption) however caused
+// and on any theory of liability, whether in contract, strict liability,
+// or tort (including negligence or otherwise) arising in any way out of
+// the use of this software, even if advised of the possibility of such damage.
+//
+//M*/
+
+#ifndef _HDPERPIXREGRESSION_HPP_
+#define _HDPERPIXREGRESSION_HPP_
+
+#include <opencv2/contrib/hand_detector.hpp>
+
+using namespace std;
+
+namespace cv {
+namespace HT {
+
+class LcFeatureComputer
+{
+public:
+    int dim;
+    int bound;
+    int veb;
+    bool use_motion;
+    virtual void compute( Mat & img, vector<KeyPoint> & keypts, Mat & desc){;}
+    virtual ~LcFeatureComputer(){}
+};
+
+
+
+class LcFeatureExtractor
+{
+public:
+
+    LcFeatureExtractor();
+
+    int veb;
+
+    int bound_setting;
+
+    void img2keypts( Mat & img, vector<KeyPoint> & keypts,Mat & img_ext, vector<KeyPoint> & keypts_ext, int step_size);
+
+    void work(Mat & img , Mat & desc, int step_size, vector<KeyPoint> * p_keypoint = NULL);
+
+    void work(Mat & img , Mat & desc, vector<KeyPoint> * p_keypoint = NULL);
+    // That's the main interface member which return a descriptor matrix
+    // with an image input
+
+    void work(Mat & img, Mat & desc, Mat & img_gt, Mat & lab, vector<KeyPoint> * p_keypoint = NULL);
+    //with ground truth image output at same time
+
+    void work(Mat & img, Mat & desc, Mat & img_gt, Mat & lab, int step_size, vector<KeyPoint> * p_keypoint = NULL);
+
+
+    void set_extractor( string setting_string );
+
+private:
+
+    vector < LcFeatureComputer * > computers;
+
+    int get_dim();
+
+    int get_maximal_bound();
+
+    void allocate_memory(Mat & desc,int dims,int data_n);
+
+    void extract_feature( Mat & img,vector<KeyPoint> & keypts,
+                        Mat & img_ext, vector<KeyPoint> & keypts_ext,
+                        Mat & desc);
+
+    void Groundtruth2Label( Mat & img_gt, Size _size , vector< KeyPoint> , Mat & lab);
+
+};
+
+//================
+
+enum ColorSpaceType{
+    LC_RGB,LC_LAB,LC_HSV
+};
+
+template< ColorSpaceType color_type, int win_size>
+class LcColorComputer: public LcFeatureComputer
+{
+public:
+    LcColorComputer();
+    void compute( Mat & img, vector<KeyPoint> & keypts, Mat & desc);
+};
+
+
+//================
+
+class LcHoGComputer: public LcFeatureComputer
+{
+public:
+    LcHoGComputer();
+    void compute( Mat & img, vector<KeyPoint> & keypts, Mat & desc);
+};
+
+//================
+
+class LcBRIEFComputer: public LcFeatureComputer
+{
+public:
+    LcBRIEFComputer();
+    void compute( Mat & img, vector<KeyPoint> & keypts, Mat & desc);
+};
+
+//===================
+
+class LcSIFTComputer: public LcFeatureComputer
+{
+public:
+    LcSIFTComputer();
+    void compute( Mat & img, vector<KeyPoint> & keypts, Mat & desc);
+};
+
+//===================
+
+class LcSURFComputer: public LcFeatureComputer
+{
+public:
+    LcSURFComputer();
+    void compute( Mat & img, vector<KeyPoint> & keypts, Mat & desc);
+};
+
+
+//====================
+
+class LcOrbComputer: public LcFeatureComputer
+{
+public:
+    LcOrbComputer();
+    void compute( Mat & img, vector<KeyPoint> & keypts, Mat & desc);
+};
+
+
+/////////////perPixRegression////////////////////
+
+class CV_EXPORTS PerPixRegression : public HandDetector {
+public :
+    struct CV_EXPORTS_W_SIMPLE Params {
+        // specifies number of nearest neighbours for initialising the classifier
+        CV_PROP_RW int knn;
+        // specifies the number of number of nearest neighbours for classification
+        CV_PROP_RW int numModels;
+        //specifies the number of classifiers trained so far
+        CV_PROP_RW int models;
+        //specifies which features to use
+        CV_PROP_RW string featureString;
+
+        Params();
+
+    };
+    vector<string> _filenames;
+    string _feature_set;
+
+    CV_WRAP PerPixRegression(const Params &parameters = Params());
+
+    void test(Mat &img,int num_models, OutputArray probImg);
+
+    Mat postprocess(Mat &img,vector<Point2f> &pt);
+
+    void computeColorHist_HSV(Mat &src, Mat &hist);
+    void colormap(Mat &src, Mat &dst, int do_norm);
+    void rasterizeResVec(Mat &img, Mat&res,vector<KeyPoint> &keypts, Size s);
+
+    virtual ~PerPixRegression() { }
+
+    virtual bool train(Mat & _rgbImg, Mat & _depthImg, Mat & _mask, bool incremental = false);
+    virtual void detect(Mat & _rgbImg, Mat & _depthImg, OutputArray probImg);
+    virtual bool save(const String &fileNamePrefix);
+    virtual bool load(const String &fileNamePrefix);
+    void initialiseFLANN(void);
+
+protected :
+    int bs;
+    Size sz;
+    Params param;
+    vector<int> indices;
+    vector<float> dists;
+    Mat                         descriptors;
+    vector<KeyPoint>            kp;
+    Mat                         responseAvg;
+    Mat                         responseVec;
+    Mat                         responseImg;
+    Mat                         rawImg;
+    Mat                         bluImg;
+    Mat                         postProcessImg;               // post processed
+
+
+    ///------------------///
+    vector<CvRTrees*>      classifier;
+    flann::Index                searchTree;
+    flann::IndexParams          indexParams;
+    LcFeatureExtractor          extractor;
+    Mat                         histAll;              // do not destroy!
+    CvRTParams RTparams;
+
+    bool flannInit;
+    bool featureInit;
+    bool classifierInit;
+};
+}
+}
+#endif
+
