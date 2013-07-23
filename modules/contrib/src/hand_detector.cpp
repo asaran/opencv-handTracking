@@ -40,7 +40,7 @@
 //
 //M*/
 
-#include <precomp.hpp>
+#include "precomp.hpp"
 #include <opencv2/contrib/hand_detector.hpp>
 
 namespace cv {

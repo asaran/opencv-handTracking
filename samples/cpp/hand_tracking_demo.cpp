@@ -1,5 +1,6 @@
 #include <opencv2/contrib/hd_color_model.hpp>
 #include <opencv2/contrib/hand_detector.hpp>
+#include <opencv2/nonfree.hpp>
 #include <string>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/core/core.hpp>

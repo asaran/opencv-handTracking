@@ -86,7 +86,7 @@ HistBackProj::Params::Params() {
 }
 
 // read params from a file
-void HistBackProj::Params::read(const FileNode& fn) {
+void HistBackProj::Params::read(const FileStorage& fn) {
     noOfBins[0] = fn["noOfBins[0]"];
     noOfBins[1] = fn["noOfBins[1]"];
     noOfBins[2] = fn["noOfBins[2]"];

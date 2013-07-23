@@ -44,7 +44,6 @@
 #define _HDHISTBACKPROJ_HPP_
 
 #include <opencv2/contrib/hand_detector.hpp>
-#include <vector>
 
 using namespace std;
 
@@ -70,7 +69,7 @@ public:
 
         CV_WRAP Params();
 
-        void read( const FileNode& fn );
+        void read( const FileStorage& fn );
         void write( FileStorage& fs ) const;
     };
 
@@ -78,10 +77,10 @@ public:
     // default destructor
     virtual ~HistBackProj() { }
     // default constructor
-    CV_WRAP HistBackProj(const HistBackProj::Params &parameters = (HistBackProj::Params()));
+    CV_WRAP HistBackProj(const Params &parameters = Params());
 
     // constructor to initialize the detector object
-    virtual bool train(Mat & _rgbImg, Mat & _depthImg, Mat & _mask, bool incremantal = false);
+    virtual bool train(Mat & _rgbImg, Mat & _depthImg, Mat & _mask, bool incremental = false);
     // actual function to detect hand - right now just gives probability image - might be changed to bounding box output
     virtual void detect(Mat & _rgbImg, Mat & _depthImg, OutputArray probImg);
     // load model from xml file

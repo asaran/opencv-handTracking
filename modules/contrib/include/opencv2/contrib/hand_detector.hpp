@@ -43,7 +43,6 @@
 #ifndef _HANDDETECTOR_HPP_
 #define _HANDDETECTOR_HPP_
 
-#include <vector>
 #include <opencv2/core.hpp>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/features2d.hpp>
@@ -53,6 +52,10 @@
 #include <opencv2/nonfree.hpp>
 #include <opencv2/objdetect.hpp>
 #include <opencv2/core/utility.hpp>
+#include <sstream>
+#include <string>
+#include <fstream>
+#include <vector>
 #include <algorithm>
 
 using namespace std;
