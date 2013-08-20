@@ -40,6 +40,9 @@
 //
 //M*/
 
+// Contributers - Gurpinder Singh Sandhu
+//              - Cheng Li (All Lc.. entities)
+
 #ifndef _HDPERPIXREGRESSION_HPP_
 #define _HDPERPIXREGRESSION_HPP_
 

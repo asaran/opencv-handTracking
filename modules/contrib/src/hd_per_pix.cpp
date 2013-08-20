@@ -40,6 +40,9 @@
 //
 //M*/
 
+// Contributers - Gurpinder Singh Sandhu
+//              - Cheng Li (All Lc.. entities)
+
 #include <precomp.hpp>
 #include "opencv2/contrib/hd_per_pix.hpp"
 #include <sstream>
@@ -331,6 +334,8 @@ bool PerPixRegression::load(vector<String> &fileNamePrefix) {
     return true;
 }
 
+// Following has been written by Cheng Li
+
 enum FeatureExtractorType{
     FEAT_RGB,
     FEAT_HSV,
@@ -531,12 +536,6 @@ void LcFeatureExtractor::img2keypts(
 
     dfd.detect(img,keypts);
 
-    if(veb)
-    {
-        cout << "image size " << img.rows << " by " << img.cols << " ( " << img.cols * img.rows << "p) " << endl;
-        cout << "keypts size " << keypts.size() << endl;
-    }
-
     // bound_setting must be adjusted depending on even and odd ?
 
     if( bound_max > bound_setting)
@@ -554,12 +553,6 @@ void LcFeatureExtractor::img2keypts(
         dfd = DenseFeatureDetector(initFeatureScale,featureScaleLevels,featureScaleMul,train_initXyStep,bound_max,true,false);
 
         dfd.detect(img_ext,keypts_ext);
-
-        if(veb)
-        {
-            cout << "extended image size " << img.rows << " by " << img.cols << " ( " << img.cols * img.rows << "p) " << endl;
-            cout << "extended keypts size " << keypts_ext.size() << endl;
-        }
     }
 }
 
@@ -572,11 +565,7 @@ int LcFeatureExtractor::get_maximal_bound()
 
 void LcFeatureExtractor::allocate_memory(Mat & desc,int dims,int data_n)
 {
-    //double t = getTickCount();
     desc = Mat::zeros(data_n,dims ,CV_32FC1);
-    //t = (getTickCount()-t)/getTickFrequency();
-    //if(veb) cout << " allocate memory:" << t << " secs." << endl;
-    //if(veb) cout << " allocate " << desc.rows << " by " << desc.cols << endl;
 }
 
 void LcFeatureExtractor::extract_feature(
@@ -584,7 +573,6 @@ void LcFeatureExtractor::extract_feature(
     Mat & img_ext, vector<KeyPoint> & keypts_ext,
     Mat & desc)
 {
-    double t = double(getTickCount());
     int data_n = (int)keypts.size();
 
     int d = 0;
@@ -597,12 +585,6 @@ void LcFeatureExtractor::extract_feature(
         else computers[i]->compute( img_ext , keypts_ext , _desc);
         d+= dim;
     }
-
-    t = (getTickCount()-t)/getTickFrequency();
-
-    if(veb) cout << " compute all features:" << t << " secs." << endl;
-
-    if(veb) cout << " feature size " << desc.rows << " by " << desc.cols << endl;
 }
 
 int LcFeatureExtractor::get_dim()
@@ -613,9 +595,6 @@ int LcFeatureExtractor::get_dim()
     {
         ans+= computers[i]->dim;
     }
-
-    if(veb) cout << "feature dim = " << ans << endl;
-
     return ans;
 }
 
@@ -636,8 +615,6 @@ LcColorComputer<color_type, win_size>::LcColorComputer()
 template< ColorSpaceType color_type, int win_size>
 void LcColorComputer<color_type, win_size>::compute( Mat & src, vector<KeyPoint> & keypts, Mat & desc)
 {
-    double t = double(getTickCount());
-
     int code;
     if(color_type==LC_RGB) code = COLOR_BGR2RGB;
     else if(color_type==LC_HSV) code = COLOR_BGR2HSV_FULL;
@@ -669,12 +646,6 @@ void LcColorComputer<color_type, win_size>::compute( Mat & src, vector<KeyPoint>
             }
         }
     }
-
-    if(0 && veb) {
-        t = (getTickCount()-t)/getTickFrequency();
-        if(color_type==LC_HSV)  cout << " copy HSV features:" << t << " secs." << endl;
-        else if(color_type==LC_LAB)  cout << " copy LAB features:" << t << " secs." << endl;
-    }
 }
 
 
@@ -692,8 +663,6 @@ LcHoGComputer::LcHoGComputer()
 
 void LcHoGComputer::compute( Mat & src, vector<KeyPoint> & keypts, Mat & desc)
 {
-    double t = double(getTickCount());
-
     HOGDescriptor hog(src.size(),Size(16,16),Size(1,1),Size(8,8),9);
 
     vector<float> hog_desp;
@@ -728,9 +697,6 @@ void LcHoGComputer::compute( Mat & src, vector<KeyPoint> & keypts, Mat & desc)
         }
 
     }
-
-    t = (getTickCount()-t)/getTickFrequency();
-    cout << " HoG Descriptor " << t << " secs." << endl;
 }
 
 //===============================
@@ -744,7 +710,6 @@ LcBRIEFComputer::LcBRIEFComputer()
 
 void LcBRIEFComputer::compute( Mat & src, vector<KeyPoint> & keypts, Mat & desc)
 {
-    double t = double(getTickCount());
     Mat brief_desc;
     BriefDescriptorExtractor bde(16);
     bde.compute(src,keypts,brief_desc);
@@ -756,11 +721,6 @@ void LcBRIEFComputer::compute( Mat & src, vector<KeyPoint> & keypts, Mat & desc)
     }
 
     brief_desc.copyTo(desc);
-
-
-    t = (getTickCount()-t)/getTickFrequency();
-    if(veb) cout << " BRIEF features:" << t << " secs." << endl;
-
 }
 
 //===============================
@@ -774,8 +734,6 @@ LcSIFTComputer::LcSIFTComputer()
 
 void LcSIFTComputer::compute( Mat & src, vector<KeyPoint> & keypts, Mat & desc)
 {
-    double t = double(getTickCount());
-
     //String gp = "SIFT";
     //Ptr<DescriptorExtractor> sift1 = DescriptorExtractor::create(gp);
     SIFT sift;
@@ -789,8 +747,6 @@ void LcSIFTComputer::compute( Mat & src, vector<KeyPoint> & keypts, Mat & desc)
         normalize(row,row,1.0,0,NORM_L1);
     }
     sift_desc.copyTo(desc);
-    t = (getTickCount()-t)/getTickFrequency();
-    if(veb) cout << " cSIFT features:" << t << " secs." << endl;
 }
 
 //===============================
@@ -804,7 +760,6 @@ LcSURFComputer::LcSURFComputer()
 
 void LcSURFComputer::compute( Mat & src, vector<KeyPoint> & keypts, Mat & desc)
 {
-    double t = double(getTickCount());
 
     //Ptr<DescriptorExtractor> surf = DescriptorExtractor::create("SURF");
     SURF surf;
@@ -817,8 +772,6 @@ void LcSURFComputer::compute( Mat & src, vector<KeyPoint> & keypts, Mat & desc)
         normalize(row,row,1.0,0,NORM_L1);
     }
     surf_desc.copyTo(desc);
-    t = (getTickCount()-t)/getTickFrequency();
-    if(veb) cout << " copy SURF features:" << t << " secs." << endl;
 }
 
 //===============================
@@ -836,8 +789,6 @@ LcOrbComputer::LcOrbComputer()
 
 void LcOrbComputer::compute( Mat & src, vector<KeyPoint> & keypts, Mat & desc)
 {
-
-    double t = (double)getTickCount();
     Mat orb_desc;
     OrbDescriptorExtractor ode;
     ode.compute(src,keypts,orb_desc);
@@ -849,10 +800,6 @@ void LcOrbComputer::compute( Mat & src, vector<KeyPoint> & keypts, Mat & desc)
     }
 
     orb_desc.copyTo(desc);
-
-
-    t = (getTickCount()-t)/getTickFrequency();
-    if(veb) cout << " compute ORB features:" << t << " secs." << endl;
 }
 }
 }
