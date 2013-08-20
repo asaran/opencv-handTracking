@@ -88,7 +88,7 @@ public:
     void work(Mat & img, Mat & desc, Mat & img_gt, Mat & lab, int step_size, vector<KeyPoint> * p_keypoint = NULL);
 
 
-    void set_extractor( string setting_string );
+    void set_extractor( String setting_string );
 
 private:
 
@@ -182,7 +182,7 @@ public :
         //specifies the number of classifiers trained so far
         CV_PROP_RW int models;
         //specifies which features to use
-        CV_PROP_RW string featureString;
+        CV_PROP_RW String featureString;
 
         Params();
 

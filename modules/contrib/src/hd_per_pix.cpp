@@ -343,7 +343,7 @@ enum FeatureExtractorType{
 };
 
 
-void LcFeatureExtractor::set_extractor( string setting_string )
+void LcFeatureExtractor::set_extractor( String setting_string )
 {
     int bo[100]; memset(bo,0,sizeof(int)*100);
 
