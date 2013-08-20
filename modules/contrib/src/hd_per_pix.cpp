@@ -96,8 +96,6 @@ void PerPixRegression::test(Mat &img, int num_models, OutputArray probImg)
     bs = extractor.bound_setting;
     rasterizeResVec(responseImg,responseAvg,kp,sz);       // class one
 
-    colormap(responseImg,rawImg,1);
-
     vector<Point2f> pt;
     postProcessImg = postprocess(responseImg,pt);
     //colormap(postProcessImg,postProcessImg,1);
@@ -110,8 +108,7 @@ Mat PerPixRegression::postprocess(Mat &img,vector<Point2f> &pt)
 {
     Mat tmp;
     GaussianBlur(img,tmp,Size(31,31),0,0,BORDER_REFLECT);
-
-    colormap(tmp,bluImg,1);
+    
     tmp = tmp > 0.04;
 
     vector<vector<Point> > co;
@@ -143,36 +140,6 @@ void PerPixRegression::rasterizeResVec(Mat &img, Mat&res,vector<KeyPoint> &keypt
         int c = floor(keypts[i].pt.x);
         img.at<float>(r,c) = res.at<float>(i,0);
     }
-}
-
-void PerPixRegression::colormap(Mat &src, Mat &dst, int do_norm)
-{
-
-    double minVal,maxVal;
-    minMaxLoc(src,&minVal,&maxVal,NULL,NULL);
-
-    Mat im;
-    src.copyTo(im);
-
-    if(do_norm) im = (src-minVal)/(maxVal-minVal);      // normalization [0 to 1]
-
-    Mat mask;
-    mask = Mat::ones(im.size(),CV_8UC1)*255.0;
-
-    compare(im,0.01,mask,CMP_GT);                       // one color values greater than X
-
-
-    Mat U8;
-    im.convertTo(U8,CV_8UC1,255,0);
-
-    Mat I3[3],hsv;
-    I3[0] = U8 * 0.85;
-    I3[1] = mask;
-    I3[2] = mask;
-    merge(I3,3,hsv);
-    cvtColor(hsv,dst,COLOR_HSV2RGB_FULL);
-
-
 }
 
 void PerPixRegression::computeColorHist_HSV(Mat &src, Mat &hist)
