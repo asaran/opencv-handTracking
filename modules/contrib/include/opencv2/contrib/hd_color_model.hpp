@@ -44,6 +44,7 @@
 #define _HDHISTBACKPROJ_HPP_
 
 #include <opencv2/contrib/hand_detector.hpp>
+#include <vector>
 
 using namespace std;
 
@@ -84,9 +85,9 @@ public:
     // actual function to detect hand - right now just gives probability image - might be changed to bounding box output
     virtual void detect(Mat & _rgbImg, Mat & _depthImg, OutputArray probImg);
     // load model from xml file
-    virtual bool load(const String &fileNamePrefix);
+    virtual bool load(vector<String> &fileNamePrefix);
     // save model to a file
-    virtual bool save(const String &fileNamePrefix);
+    virtual bool save(vector<String> &fileNamePrefix);
 
 protected:
     // specifies if the params have been initialized

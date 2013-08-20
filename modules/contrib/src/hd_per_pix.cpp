@@ -48,8 +48,8 @@ namespace cv {
 namespace HT {
 
 PerPixRegression::Params::Params() {
-    knn = 5;
-    numModels = 3;
+    knn = 1;
+    numModels = 1;
     models = 0;
     featureString = "rvl";
 }
@@ -64,10 +64,10 @@ void PerPixRegression::test(Mat &img, int num_models, OutputArray probImg)
     if(num_models > param.knn) return;
     Mat hist;
     computeColorHist_HSV(img,hist);                                 // extract hist
-
+    indices.clear();
     searchTree.knnSearch(hist, indices, dists, param.knn);            // probe search
-
-    extractor.work(img,descriptors,1,&kp);
+    Mat descriptors;
+    extractor.work(img,descriptors,3,&kp);
 
     if(!responseAvg.data) responseAvg = Mat::zeros(descriptors.rows,1,CV_32FC1);
     else responseAvg *= 0;
@@ -83,8 +83,8 @@ void PerPixRegression::test(Mat &img, int num_models, OutputArray probImg)
         for(int k=0; k<n; k++)
             responseVec.at<float>(k,0) = classifier[idx]->predict(descriptors.row(k));       // run classifier
 
-        responseAvg += responseVec*float(pow(0.8f,(float)i));
-        norm += float(pow(0.8f,(float)i));
+        responseAvg += responseVec*float(pow(0.9f,(float)i));
+        norm += float(pow(0.9f,(float)i));
     }
 
     responseAvg /= norm;
@@ -97,7 +97,7 @@ void PerPixRegression::test(Mat &img, int num_models, OutputArray probImg)
 
     vector<Point2f> pt;
     postProcessImg = postprocess(responseImg,pt);
-    colormap(postProcessImg,postProcessImg,1);
+    //colormap(postProcessImg,postProcessImg,1);
     //cvtColor(_ppr,_ppr,CV_GRAY2BGR);
 
     postProcessImg.copyTo(probImg);
@@ -239,35 +239,33 @@ bool PerPixRegression::train(Mat &_rgbImg, Mat &_depthImg, Mat &_mask, bool incr
     computeColorHist_HSV(_rgbImg,hist);
     if(!incremental)
         histAll.release();
+
     //push to histAll
     histAll.push_back(hist);
 
     Mat desc;
     Mat lab;
-    //vector<KeyPoint> kp;
+    vector<KeyPoint> kp;
     CvRTrees *rt = new CvRTrees;
 
     _mask.convertTo(_mask,CV_8UC1);
-    extractor.work(_rgbImg, desc, _mask, lab, 1, &kp);
+    extractor.work(_rgbImg, desc, _mask, lab, 3, &kp);
 
-    Mat varType = Mat::ones(desc.cols+1,1,CV_8UC1) * CV_VAR_NUMERICAL; // all floats
+    Mat varType = Mat::ones(desc.cols+1,1,CV_8UC1) * CV_VAR_NUMERICAL;
     rt->train(desc,CV_ROW_SAMPLE,lab,Mat(),Mat(),varType,Mat(), RTparams);
-    //cout << "first : " << rt->get_tree_count() << "\n";
 
     if(!incremental) {
         param.models = 0;
         classifier.clear();
     }
-    //rt = &randomTree;
     classifier.push_back(rt);
-    //cout << "second : " << classifier[param.models]->get_tree_count() << "\n";
     param.models++;
     classifierInit = true;
     return true;
 }
 
 void PerPixRegression::detect(Mat & _rgbImg, Mat & _depthImg, OutputArray probImg) {
-    CV_Assert(classifierInit == false || "Classifiers not trained/loaded yet");
+    CV_Assert(classifierInit == true && "Classifiers not trained/loaded yet");
     if(!featureInit) {
             extractor.set_extractor(param.featureString);
             featureInit = true;
@@ -278,35 +276,38 @@ void PerPixRegression::detect(Mat & _rgbImg, Mat & _depthImg, OutputArray probIm
     test(_rgbImg, param.numModels, probImg);
 }
 
-bool PerPixRegression::save(const String &fileNamePrefix) {
+bool PerPixRegression::save(vector<String> &fileNamePrefix) {
     CV_Assert(param.models > 0 && "No models to save");
+    CV_Assert(fileNamePrefix.size() == 3);
     FileStorage fs;
-    CV_Assert(fs.open(fileNamePrefix + "info.xml", FileStorage::WRITE) && "Could not open the file storage. Check the path and permissions");
+    CV_Assert(fs.open(fileNamePrefix[0] + ".xml", FileStorage::WRITE) && "Could not open the file storage. Check the path and permissions");
     fs << "numOfModels" << param.models;
+    fs << "featureString" << param.featureString;
     fs.release();
 
     stringstream s1, s2;
 
     for(int i=0; i<param.models; i++) {
         s1.str("");
-        s1 << fileNamePrefix.c_str() << "model/model" << i << ".xml";
+        s1 << fileNamePrefix[1].c_str() << i << ".xml";
         s2.str("");
-        s2 << fileNamePrefix.c_str() << "hist/hist" << i << ".xml";
-        CV_Assert(fs.open(s2.str().c_str(), FileStorage::WRITE) && "Could not open the file storage. Check the path and permissions");
+        s2 << fileNamePrefix[2].c_str() << i << ".xml";
+        CV_Assert(fs.open(s1.str().c_str(), FileStorage::WRITE) && "Could not open the file storage. Check the path and permissions");
         fs << "hsv" << histAll.row(i);
         fs.release();
-        classifier[i]->save(s1.str().c_str());
+        classifier[i]->save(s2.str().c_str());
     }
     return true;
 }
 
-bool PerPixRegression::load(const String &fileNamePrefix) {
+bool PerPixRegression::load(vector<String> &fileNamePrefix) {
     histAll.release();
     classifier.clear();
-
+    CV_Assert(fileNamePrefix.size() == 3);
     FileStorage fs;
-    CV_Assert(fs.open(fileNamePrefix + "info.xml", FileStorage::READ) && "Could not open the file storage. Check the path and permissions");
+    CV_Assert(fs.open(fileNamePrefix[0] + ".xml", FileStorage::READ) && "Could not open the file storage. Check the path and permissions");
     fs["numOfModels"] >> param.models;
+    fs["featureString"] >> param.featureString;
     fs.release();
     classifier = vector<CvRTrees*>(param.models);
 
@@ -315,16 +316,16 @@ bool PerPixRegression::load(const String &fileNamePrefix) {
 
     for(int i=0; i<param.models; i++) {
         s1.str("");
-        s1 << fileNamePrefix.c_str() << "model/model" << i << ".xml";
+        s1 << fileNamePrefix[1].c_str() << i << ".xml";
         s2.str("");
-        s2 << fileNamePrefix.c_str() << "hist/hist" << i << ".xml";
-        CV_Assert(fs.open(s2.str().c_str(), FileStorage::READ) && "Could not open the file storage. Check the path and permissions");
+        s2 << fileNamePrefix[2].c_str() << i << ".xml";
+        CV_Assert(fs.open(s1.str().c_str(), FileStorage::READ) && "Could not open the file storage. Check the path and permissions");
 
         fs["hsv"] >> hist;
         histAll.push_back(hist);
         fs.release();
         classifier[i] = new CvRTrees;
-        classifier[i]->load(s1.str().c_str());
+        classifier[i]->load(s2.str().c_str());
     }
     classifierInit = true;
     return true;
@@ -643,7 +644,10 @@ void LcColorComputer<color_type, win_size>::compute( Mat & src, vector<KeyPoint>
     else if(color_type==LC_LAB) code = COLOR_BGR2Lab;
 
     Mat color;
-    cvtColor(src,color,code);
+    if(color_type != LC_RGB)
+        cvtColor(src,color,code);
+    else
+        src.copyTo(color);
 
     for(int k=0;k<(int)keypts.size();k++)
     {
@@ -772,9 +776,12 @@ void LcSIFTComputer::compute( Mat & src, vector<KeyPoint> & keypts, Mat & desc)
 {
     double t = double(getTickCount());
 
+    //String gp = "SIFT";
+    //Ptr<DescriptorExtractor> sift1 = DescriptorExtractor::create(gp);
     SIFT sift;
     Mat sift_desc;
-    sift( src, noArray() , keypts,sift_desc,true);
+    vector<KeyPoint> kk = keypts;
+    sift( src, cv::noArray() , keypts,sift_desc,true);
     sift_desc.convertTo(sift_desc,5);
 
     for(int i=0;i<(int)sift_desc.rows;i++){
@@ -799,16 +806,17 @@ void LcSURFComputer::compute( Mat & src, vector<KeyPoint> & keypts, Mat & desc)
 {
     double t = double(getTickCount());
 
-    SURF sift;
-    Mat sift_desc;
-    sift( src, Mat(), keypts,sift_desc,true);
-    sift_desc.convertTo(sift_desc,CV_32FC1);
+    //Ptr<DescriptorExtractor> surf = DescriptorExtractor::create("SURF");
+    SURF surf;
+    Mat surf_desc;
+    surf( src, Mat(), keypts,surf_desc,true);
+    surf_desc.convertTo(surf_desc,CV_32FC1);
 
-    for(int i=0;i<(int)sift_desc.rows;i++){
-        Mat row = sift_desc.row(i);
+    for(int i=0;i<(int)surf_desc.rows;i++){
+        Mat row = surf_desc.row(i);
         normalize(row,row,1.0,0,NORM_L1);
     }
-    sift_desc.copyTo(desc);
+    surf_desc.copyTo(desc);
     t = (getTickCount()-t)/getTickFrequency();
     if(veb) cout << " copy SURF features:" << t << " secs." << endl;
 }

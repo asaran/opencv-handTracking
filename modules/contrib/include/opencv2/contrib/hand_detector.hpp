@@ -78,9 +78,9 @@ public:
     //Detect function to be called in the video loop for subsequent detection of the hand
     virtual void detect(Mat & _rgbImg, Mat & _depthImg, OutputArray probImg) = 0;
     //Load a detector from a file
-    virtual bool load(const String &fileNamePrefix) = 0;
+    virtual bool load(vector<String> &fileNamePrefix) = 0;
     //Save a detector to a file
-    virtual bool save(const String &fileNamePrefix) = 0;
+    virtual bool save(vector<String> &fileNamePrefix) = 0;
     //Virtual Destructor for HandDetector class
     virtual ~HandDetector() { }
 };

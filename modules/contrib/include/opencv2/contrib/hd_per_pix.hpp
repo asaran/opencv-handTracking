@@ -44,6 +44,7 @@
 #define _HDPERPIXREGRESSION_HPP_
 
 #include <opencv2/contrib/hand_detector.hpp>
+#include <fstream>
 
 using namespace std;
 
@@ -203,8 +204,9 @@ public :
 
     virtual bool train(Mat & _rgbImg, Mat & _depthImg, Mat & _mask, bool incremental = false);
     virtual void detect(Mat & _rgbImg, Mat & _depthImg, OutputArray probImg);
-    virtual bool save(const String &fileNamePrefix);
-    virtual bool load(const String &fileNamePrefix);
+    // save trained models with general configuration file with configFileName, global feature files with featureFilePrefix, models with modelFilePrefix in that order in a vector. All names without .xml
+    virtual bool save(vector<String> &fileNamePrefix);
+    virtual bool load(vector<String> &fileNamePrefix);
     void initialiseFLANN(void);
 
 protected :

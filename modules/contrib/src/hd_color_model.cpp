@@ -56,7 +56,7 @@ float def_sranges[] = {0, 256};
 float def_vranges[] = {0, 256};
 float def_dranges[] = {400, 7000};     // approx. to be replaced with exact value
 
-HistBackProj::HistBackProj(const HistBackProj::Params &parameters) : params(parameters) {
+HistBackProj::HistBackProj(const Params &parameters) : params(parameters) {
     //useColor = true;
     //useDepth = false;
     //paramInit = true;
@@ -176,13 +176,13 @@ void HistBackProj::detect(Mat & _rgbImg, Mat & _depthImg, OutputArray _probImg) 
     probImg.convertTo(_probImg, CV_8U);
 }
 
-bool HistBackProj::load(const String &fileNamePrefix) {
+bool HistBackProj::load(vector<String> &fileNamePrefix) {
     FileStorage fs;
-    CV_Assert(fs.open(fileNamePrefix + "info.xml", FileStorage::READ) && "Could not open file");
+    CV_Assert(fs.open(fileNamePrefix[0] + "info.xml", FileStorage::READ) && "Could not open file");
     params.read(fs);
     fs.release();
 
-    CV_Assert(fs.open(fileNamePrefix + "hist.xml", FileStorage::READ) && "Could not open file");
+    CV_Assert(fs.open(fileNamePrefix[0] + "hist.xml", FileStorage::READ) && "Could not open file");
     if(params.useColor) {
         fs["hist[0]"] >> hist[0];
         fs["hist[1]"] >> hist[1];
@@ -193,13 +193,14 @@ bool HistBackProj::load(const String &fileNamePrefix) {
     return true;
 }
 
-bool HistBackProj::save(const String &fileNamePrefix) {
+bool HistBackProj::save(vector<String> &fileNamePrefix) {
+    CV_Assert(fileNamePrefix.size() == 1);
     FileStorage fs;
-    CV_Assert(fs.open(fileNamePrefix + "info.xml", FileStorage::WRITE) && "Could not open file");
+    CV_Assert(fs.open(fileNamePrefix[0] + "info.xml", FileStorage::WRITE) && "Could not open file");
     params.write(fs);
     fs.release();
 
-    CV_Assert(fs.open(fileNamePrefix + "hist.xml", FileStorage::WRITE) && "Could not open file");
+    CV_Assert(fs.open(fileNamePrefix[0] + "hist.xml", FileStorage::WRITE) && "Could not open file");
     if(params.useColor) {
         fs << "hist[0]" << hist[0];
         fs << "hist[1]" << hist[1];
@@ -246,5 +247,3 @@ void HistBackProj::createColorModel(Mat &_rgbImg, Mat & _depthImg, Mat & _mask, 
 }
 }
 }
-
-
