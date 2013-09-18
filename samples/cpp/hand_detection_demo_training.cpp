@@ -50,7 +50,7 @@ int main(){
     for(int i=0; i<N_img; i++) {
         //read images and masks
         img = imread(imgPaths[i]);
-        maskImg = imread(maskPaths[i]);
+        maskImg = imread(maskPaths[i], 0);
         preprocess(img, maskImg);
         //train on images
         dt.train(img, depthImg, maskImg, true);
