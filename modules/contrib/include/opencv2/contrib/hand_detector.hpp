@@ -40,6 +40,8 @@
 //
 //M*/
 
+// Author - Gurpinder Singh Sandhu
+
 #ifndef _HANDDETECTOR_HPP_
 #define _HANDDETECTOR_HPP_
 

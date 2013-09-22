@@ -40,6 +40,8 @@
 //
 //M*/
 
+// Author - Gurpinder Singh Sandhu
+
 #ifndef _HDHISTBACKPROJ_HPP_
 #define _HDHISTBACKPROJ_HPP_
 
