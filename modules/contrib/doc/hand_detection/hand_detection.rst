@@ -40,11 +40,11 @@ Trains the detector on a single image and return true on successful training.
 
     :param _rgbImg: The input RGB/color image with CV_8UC3 type.
     
-    :param _depthImg: The input depth image with CV_16UC1 type.
+    :param _depthImg: The input depth image with CV_16UC1 type. Whether to use depth information depends on 'useDepth' parameter in individual methods.
     
     :param _mask: Mask image showing valid hand region/patch with CV_8UC1 type
      
-    :param incremental : Passed in as true if we want to append the new data for training. If false, all previous learned models are discarded and training starts fresh.
+    :param incremental: Passed in as true if we want to append the new data for training. If false, all previous learned models are discarded and training starts fresh.
 
 
 HandDetector::detect 
@@ -53,11 +53,11 @@ Detects whether there is hand or not in the image and outputs an probability ima
 
 .. ocv:function:: void HandDetector::detect(Mat & _rgbImg, Mat & _depthImg, OutputArray probImg) 
 
-    :param _rgbImg: The input color image on which to detect
+    :param _rgbImg: The input color image on which to detect - CV_8UC3
     
-    :param _depthImg: The input _depthImg providing additional information used for detection (may not be used)
+    :param _depthImg: The input _depthImg providing additional information used for detection (may not be used at all, depends on individual detection method) - CV_16UC1.
     
-    :param _probImg: The output probability image 
+    :param _probImg: The output probability image - CV_8UC1
 
         
 HandDetector::load

@@ -3,8 +3,8 @@ Hand Detection
 
 .. highlight:: cpp
 
-HandDetector::HistBackPro
--------------------------
+HandDetector::HistBackProj
+-------------------------_
 
 Derived class from hand detector class. Performs detection using Histogram matching through backProjected images.
 

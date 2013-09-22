@@ -198,18 +198,6 @@ public :
 
     // constructor for PerPixRegression
         CV_WRAP PerPixRegression(const Params &parameters = Params());
-
-        // Function for testing image (i.e detection)
-        void test(Mat &img,int num_models, OutputArray probImg);
-        // Function to convert output from vector of points to image
-        Mat postprocess(Mat &img,vector<Point2f> &pt);
-
-        // Function to compute color Histogram
-        void computeColorHist_HSV(Mat &src, Mat &hist);
-        // Funtion to raterise result vector
-        void rasterizeResVec(Mat &img, Mat&res,vector<KeyPoint> &keypts, Size s);
-        // initialize nearest neighbour search
-        void initialiseFLANN(void);
         // Default destructor
         virtual ~PerPixRegression() { }
 
@@ -256,6 +244,19 @@ protected :
     bool flannInit;
     bool featureInit;
     bool classifierInit;
+    
+    /*-------------------Member Functions---------------*/
+    // Function for testing image (i.e detection)
+    void test(Mat &img,int num_models, OutputArray probImg);
+    // Function to convert output from vector of points to image
+    Mat postprocess(Mat &img,vector<Point2f> &pt);
+
+    // Function to compute color Histogram
+    void computeColorHist_HSV(Mat &src, Mat &hist);
+    // Funtion to raterise result vector
+    void rasterizeResVec(Mat &img, Mat&res,vector<KeyPoint> &keypts, Size s);
+    // initialize nearest neighbour search
+    void initialiseFLANN(void);
 };
 }
 }

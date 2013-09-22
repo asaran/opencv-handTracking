@@ -6,14 +6,13 @@ Hand Detection
 HandDetector::PerPixRegression
 ------------------------------
 
-Derived class from HandDetector class. Detection method used in this class is pixel level hand detection as discussed by Kris Kitani and  in their paper -
+Derived class from HandDetector class. Detection method used in this class is pixel level hand detection as discussed by Kris Kitani and Cheng Li in their paper -
 
 Pixel-level Hand Detection in Ego-Centric Videos - [KrisLi]_
 
 Declaration::
 
     class CV_EXPORTS PerPixRegression : public HandDetector {
-    
     public :
         struct CV_EXPORTS_W_SIMPLE Params {
             // specifies number of nearest neighbours for initialising the classifier
@@ -32,27 +31,19 @@ Declaration::
             Params();
 
         };
-        vector<string> _filenames;
-        string _feature_set;
-
+        // constructor for PerPixRegression
         CV_WRAP PerPixRegression(const Params &parameters = Params());
-
-        void test(Mat &img,int num_models, OutputArray probImg);
-
-        Mat postprocess(Mat &img,vector<Point2f> &pt);
-
-        void computeColorHist_HSV(Mat &src, Mat &hist);
-        void colormap(Mat &src, Mat &dst, int do_norm);
-        void rasterizeResVec(Mat &img, Mat&res,vector<KeyPoint> &keypts, Size s);
-
+        // Default destructor
         virtual ~PerPixRegression() { }
 
+        // Function to train models on input image
         virtual bool train(Mat & _rgbImg, Mat & _depthImg, Mat & _mask, bool incremental = false);
+        // Function to detect images - outputs binary image
         virtual void detect(Mat & _rgbImg, Mat & _depthImg, OutputArray probImg);
         // save trained models with general configuration file with configFileName, global feature files with featureFilePrefix, models with modelFilePrefix in that order in a vector. All names without .xml
         virtual bool save(vector<String> &fileNamePrefix);
+        // load classifier from saved files - symmetric to load
         virtual bool load(vector<String> &fileNamePrefix);
-        void initialiseFLANN(void);
 
     protected :
         int bs;
@@ -71,16 +62,37 @@ Declaration::
 
 
         ///------------------///
+        //classifier
         vector<CvRTrees*>           classifier;
+        // search tree
         flann::Index                searchTree;
+        // flann index params
         flann::IndexParams          indexParams;
+        // feature extractor
         LcFeatureExtractor          extractor;
+        // object storing hsv features for matching
         Mat                         histAll;              // do not destroy!
+        // random tree params
         CvRTParams RTparams;
 
+        // variables specifying intializing of modules
         bool flannInit;
         bool featureInit;
         bool classifierInit;
+
+        /*------------------Member functions-----------------------------*/
+
+        // Function for testing image (i.e detection)
+        void test(Mat &img,int num_models, OutputArray probImg);
+        // Function to convert output from vector of points to image
+        Mat postprocess(Mat &img,vector<Point2f> &pt);
+
+        // Function to compute color Histogram
+        void computeColorHist_HSV(Mat &src, Mat &hist);
+        // Funtion to raterise result vector
+        void rasterizeResVec(Mat &img, Mat&res,vector<KeyPoint> &keypts, Size s);
+        // initialize nearest neighbour search
+        void initialiseFLANN(void);
     };
 
 PerPixRegression::Params
@@ -116,7 +128,7 @@ General structure for defining various parameters used to set up PerPixRegressio
         
         * u – SURF
         
-        .. note:: default is “rvl” for {RGB, HSV, LAB} features. Refer paper/source code on how features are extracted.
+      .. note:: default is “rvl” for {RGB, HSV, LAB} features. Refer paper/source code on how features are extracted.
     
     * **training_step_size** – defines the number of pixels to skip (1 – for no skipping) during training.
     

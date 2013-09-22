@@ -41,7 +41,7 @@
 //M*/
 
 // Contributers - Gurpinder Singh Sandhu
-//              - Cheng Li (All Lc.. entities)
+//              - Cheng Li
 //              - Kris Kitani
 
 #include <precomp.hpp>
