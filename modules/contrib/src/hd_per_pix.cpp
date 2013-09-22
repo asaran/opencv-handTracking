@@ -67,7 +67,10 @@ void PerPixRegression::initialiseFLANN(void) {
 
 void PerPixRegression::test(Mat &img, int num_models, OutputArray probImg)
 {
-    if(num_models > param.knn) return;
+    if(param.knn > param.models)
+            param.knn = param.models;
+    if(num_models > param.knn)
+        num_models = param.knn;
     Mat hist;
     computeColorHist_HSV(img,hist);                                 // extract hist
     indices.clear();
