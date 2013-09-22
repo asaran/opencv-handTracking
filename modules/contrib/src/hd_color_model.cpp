@@ -39,6 +39,9 @@
 // the use of this software, even if advised of the possibility of such damage.
 //
 //M*/
+// Contributors - Gurpinder Singh Sandhu
+//                Kris Kitani
+//                Cheng Li                
 
 #include <precomp.hpp>
 #include <opencv2/contrib/hd_color_model.hpp>
@@ -247,3 +250,5 @@ void HistBackProj::createColorModel(Mat &_rgbImg, Mat & _depthImg, Mat & _mask, 
 }
 }
 }
+
+
