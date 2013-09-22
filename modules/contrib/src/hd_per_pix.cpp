@@ -75,8 +75,8 @@ void PerPixRegression::test(Mat &img, int num_models, OutputArray probImg)
     computeColorHist_HSV(img,hist);                                 // extract hist
     indices.clear();
     searchTree.knnSearch(hist, indices, dists, param.knn);            // probe search
-    Mat descriptors1;
-    extractor.work(img,descriptors1,param.testing_step_size,&kp);
+    //Mat descriptors1;
+    extractor.work(img,descriptors,param.testing_step_size,&kp);
 
     if(!responseAvg.data) responseAvg = Mat::zeros(descriptors.rows,1,CV_32FC1);
     else responseAvg *= 0;

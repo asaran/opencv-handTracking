@@ -4,7 +4,9 @@ Hand Detection
 .. highlight:: cpp
 
 HandDetector::HistBackProj
--------------------------_
+--------------------------
+
+.. ocv:class:: HistBackProj
 
 Derived class from hand detector class. Performs detection using Histogram matching through backProjected images.
 

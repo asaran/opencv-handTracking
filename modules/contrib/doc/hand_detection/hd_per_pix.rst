@@ -6,6 +6,8 @@ Hand Detection
 HandDetector::PerPixRegression
 ------------------------------
 
+.. ocv:class:: PerPixRegression
+
 Derived class from HandDetector class. Detection method used in this class is pixel level hand detection as discussed by Kris Kitani and Cheng Li in their paper -
 
 Pixel-level Hand Detection in Ego-Centric Videos - [KrisLi]_
