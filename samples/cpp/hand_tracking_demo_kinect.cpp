@@ -63,8 +63,8 @@ int main() {
     loadImage(img, depthImg, depthMap);
     userSelectsTarget(img, st);
     segmentHand(depthMap, st, mask);
-    imshow("mask", mask);
-    waitKey(30);
+    //imshow("mask", mask);
+    //waitKey(30);
     initializeTracker(img, mask);
     showImages(img, mask, st);
 
@@ -246,7 +246,7 @@ void showImages(Mat &img, Mat &mask, state &st) {
     //waitKey(0);
 
     //imshow("image", img);
-    imshow("mask", mask);
+    //imshow("mask", mask);
 
     imshow("rgb image, depth image, extracted mask to train", showImg);
     waitKey(30);
@@ -393,7 +393,7 @@ const unsigned int SENSOR_MAX = 7000;
 
 queue<pair<int, int> > _pixels;
 int _depthThr = 40;
-int _maxObjectSize = 10000;
+int _maxObjectSize = 1000000;
 
 void processNeighbor(int &pixelcount, double &mean, cv::Mat &mask, const short first, const short second, const cv::Mat &depth);
 pair<int, int> searchNearestPixel(const Mat &depth, Rect &region);
@@ -497,16 +497,10 @@ int canny_thresh = 100;
 int thresh_area = 200;
 // convert probabilty image to state
 bool convertToState(Mat probImg, state &st) {
-    int erosion_type = 0;
-    int erosion_size = 1;
-    Mat element = getStructuringElement( erosion_type, Size( 2*erosion_size + 1, 2*erosion_size+1 ), Point( erosion_size, erosion_size ) );
-
-    // process image
-    erode(probImg, probImg, element);
-    dilate(probImg, probImg, element);
-
+    
+    
     Mat grayImg;
-    probImg.copyTo(grayImg);
+    blur(probImg, grayImg, Size(3, 3));
 
     Mat canny_output;
     vector<vector<Point> > contours;
