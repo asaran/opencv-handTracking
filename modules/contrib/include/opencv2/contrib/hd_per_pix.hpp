@@ -43,6 +43,7 @@
 // Contributers - Gurpinder Singh Sandhu
 //              - Cheng Li (All Lc.. entities)
 
+
 #ifndef _HDPERPIXREGRESSION_HPP_
 #define _HDPERPIXREGRESSION_HPP_
 
@@ -182,41 +183,44 @@ public :
         CV_PROP_RW int knn;
         // specifies the number of number of nearest neighbours for classification
         CV_PROP_RW int numModels;
-        //specifies the number of classifiers trained so far
+        // specifies the number of classifiers trained so far
         CV_PROP_RW int models;
-        //specifies which features to use
-        CV_PROP_RW String featureString;
-        //default constructor
+        // specifies which features to use
+        CV_PROP_RW string featureString;
+        // specifies step size for considering pixels for processing - training
+        CV_PROP_RW int training_step_size;
+        // specifies step size for considering pixels for proccesing - testing/detecting
+        CV_PROP_RW int testing_step_size;
+
         Params();
 
     };
-    
+
     // constructor for PerPixRegression
-    CV_WRAP PerPixRegression(const Params &parameters = Params());
-    
-    // Function for testing image (i.e detection)
-    void test(Mat &img,int num_models, OutputArray probImg);
-    // Function to convert output from vector of points to image
-    Mat postprocess(Mat &img,vector<Point2f> &pt);
-    
-    // Function to compute color Histogram
-    void computeColorHist_HSV(Mat &src, Mat &hist);
-    // Funtion to raterise result vector
-    void rasterizeResVec(Mat &img, Mat&res,vector<KeyPoint> &keypts, Size s);
-    // initialize nearest neighbour search
-    void initialiseFLANN(void);
-    // Default destructor
-    virtual ~PerPixRegression() { }
-    
-    // Function to train models on input image
-    virtual bool train(Mat & _rgbImg, Mat & _depthImg, Mat & _mask, bool incremental = false);
-    // Function to detect images - outputs binary image
-    virtual void detect(Mat & _rgbImg, Mat & _depthImg, OutputArray probImg);
-    // save trained models with general configuration file with configFileName, global feature files with featureFilePrefix, models with modelFilePrefix in that order in a vector. All names without .xml
-    virtual bool save(vector<String> &fileNamePrefix);
-    // load classifier from saved files - symmetric to load
-    virtual bool load(vector<String> &fileNamePrefix);
-    
+        CV_WRAP PerPixRegression(const Params &parameters = Params());
+
+        // Function for testing image (i.e detection)
+        void test(Mat &img,int num_models, OutputArray probImg);
+        // Function to convert output from vector of points to image
+        Mat postprocess(Mat &img,vector<Point2f> &pt);
+
+        // Function to compute color Histogram
+        void computeColorHist_HSV(Mat &src, Mat &hist);
+        // Funtion to raterise result vector
+        void rasterizeResVec(Mat &img, Mat&res,vector<KeyPoint> &keypts, Size s);
+        // initialize nearest neighbour search
+        void initialiseFLANN(void);
+        // Default destructor
+        virtual ~PerPixRegression() { }
+
+        // Function to train models on input image
+        virtual bool train(Mat & _rgbImg, Mat & _depthImg, Mat & _mask, bool incremental = false);
+        // Function to detect images - outputs binary image
+        virtual void detect(Mat & _rgbImg, Mat & _depthImg, OutputArray probImg);
+        // save trained models with general configuration file with configFileName, global feature files with featureFilePrefix, models with modelFilePrefix in that order in a vector. All names without .xml
+        virtual bool save(vector<String> &fileNamePrefix);
+        // load classifier from saved files - symmetric to load
+        virtual bool load(vector<String> &fileNamePrefix);
 
 protected :
     int bs;
@@ -235,19 +239,19 @@ protected :
 
 
     ///------------------///
-    // classifier
-    vector<CvRTrees*>      classifier;
+    //classifier
+    vector<CvRTrees*>           classifier;
     // search tree
     flann::Index                searchTree;
     // flann index params
     flann::IndexParams          indexParams;
-    // Feature extractor
+    // feature extractor
     LcFeatureExtractor          extractor;
-    // Object storing all extracted features
+    // object storing hsv features for matching
     Mat                         histAll;              // do not destroy!
-    // Random Tree Params
+    // random tree params
     CvRTParams RTparams;
-    
+
     // variables specifying intializing of modules
     bool flannInit;
     bool featureInit;
