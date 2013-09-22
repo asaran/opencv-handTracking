@@ -62,7 +62,7 @@ public:
     int bound;
     int veb;
     bool use_motion;
-    virtual void compute( Mat & img, vector<KeyPoint> & keypts, Mat & desc){;}
+    virtual void compute( Mat & img, vector<KeyPoint> & keypts, Mat & desc) = 0;
     virtual ~LcFeatureComputer(){}
 };
 
@@ -186,7 +186,7 @@ public :
         // specifies the number of classifiers trained so far
         CV_PROP_RW int models;
         // specifies which features to use
-        CV_PROP_RW string featureString;
+        CV_PROP_RW String featureString;
         // specifies step size for considering pixels for processing - training
         CV_PROP_RW int training_step_size;
         // specifies step size for considering pixels for proccesing - testing/detecting

@@ -42,6 +42,7 @@
 
 // Contributers - Gurpinder Singh Sandhu
 //              - Cheng Li (All Lc.. entities)
+//              - Kris Kitani
 
 #include <precomp.hpp>
 #include "opencv2/contrib/hd_per_pix.hpp"
@@ -51,10 +52,12 @@ namespace cv {
 namespace HT {
 
 PerPixRegression::Params::Params() {
-    knn = 1;
-    numModels = 1;
+    knn = 10;
+    numModels = 10;
     models = 0;
     featureString = "rvl";
+    training_step_size = 3;
+    testing_step_size = 3;
 }
 
 void PerPixRegression::initialiseFLANN(void) {
@@ -69,8 +72,8 @@ void PerPixRegression::test(Mat &img, int num_models, OutputArray probImg)
     computeColorHist_HSV(img,hist);                                 // extract hist
     indices.clear();
     searchTree.knnSearch(hist, indices, dists, param.knn);            // probe search
-    Mat descriptors;
-    extractor.work(img,descriptors,3,&kp);
+    Mat descriptors1;
+    extractor.work(img,descriptors1,param.testing_step_size,&kp);
 
     if(!responseAvg.data) responseAvg = Mat::zeros(descriptors.rows,1,CV_32FC1);
     else responseAvg *= 0;
@@ -108,7 +111,7 @@ Mat PerPixRegression::postprocess(Mat &img,vector<Point2f> &pt)
 {
     Mat tmp;
     GaussianBlur(img,tmp,Size(31,31),0,0,BORDER_REFLECT);
-    
+
     tmp = tmp > 0.04;
 
     vector<vector<Point> > co;
@@ -200,6 +203,7 @@ PerPixRegression::PerPixRegression(const Params &parameters) : param(parameters)
 }
 
 bool PerPixRegression::train(Mat &_rgbImg, Mat &_depthImg, Mat &_mask, bool incremental) {
+    _depthImg = Mat();
     //Extract histogram
     if(!featureInit) {
         extractor.set_extractor(param.featureString);
@@ -215,11 +219,11 @@ bool PerPixRegression::train(Mat &_rgbImg, Mat &_depthImg, Mat &_mask, bool incr
 
     Mat desc;
     Mat lab;
-    vector<KeyPoint> kp;
+    vector<KeyPoint> kp1;
     CvRTrees *rt = new CvRTrees;
 
     _mask.convertTo(_mask,CV_8UC1);
-    extractor.work(_rgbImg, desc, _mask, lab, 3, &kp);
+    extractor.work(_rgbImg, desc, _mask, lab, param.training_step_size, &kp1);
 
     Mat varType = Mat::ones(desc.cols+1,1,CV_8UC1) * CV_VAR_NUMERICAL;
     rt->train(desc,CV_ROW_SAMPLE,lab,Mat(),Mat(),varType,Mat(), RTparams);
@@ -235,6 +239,7 @@ bool PerPixRegression::train(Mat &_rgbImg, Mat &_depthImg, Mat &_mask, bool incr
 }
 
 void PerPixRegression::detect(Mat & _rgbImg, Mat & _depthImg, OutputArray probImg) {
+    _depthImg = Mat();
     CV_Assert(classifierInit == true && "Classifiers not trained/loaded yet");
     if(!featureInit) {
             extractor.set_extractor(param.featureString);
@@ -412,7 +417,7 @@ LcFeatureExtractor::LcFeatureExtractor()
 
     //set_extractor( "robvltdmchsug" );
 
-    set_extractor( "rl" );
+    set_extractor( "rvl" );
 
     for(int i = 0;i< (int)computers.size();i++) computers[i]->veb = veb;
 

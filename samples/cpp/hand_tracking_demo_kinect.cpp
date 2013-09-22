@@ -24,21 +24,21 @@ struct state {
 // initialize PerPixRegression with desired parameters
 void initializeDetector(HT::PerPixRegression &dt);
 // Load and preprocess images
-bool loadImage(Mat &img, Mat &depthImg, Mat &depthMap, bool useDepth = true);
+bool loadImage(Mat &img, Mat &depthImg, Mat &depthMap);
 // select target from image
 void userSelectsTarget(Mat &_inpImg, state &st);
 // mouse callback used for userSelectsTarget
 void mouse_callback(int event,int x,int y,int ,void* param);
 // initialize tracker
-void initializeTracker(Mat &img, Mat &depthImg, Mat &mask, state &s);
+void initializeTracker(Mat &img, Mat &mask);
 // Track hand and output its states
-bool track(Mat &img, Mat &depthImg, state &s);
+bool track(Mat &img, state &s);
 // match object
 bool matchObject(Mat &img, state &s);
 // Segment hand from depthImg to be used as positive labels for training
 void segmentHand(Mat &depthImg, state &s, Mat &mask);
 // Function to show images and mask used for training
-void showImages(Mat &img, Mat &depthImg, Mat &mask, state &st);
+void showImages(Mat &img, Mat &mask, state &st);
 // Convert from probImg (output of detector) to state
 bool convertToState(Mat probImg, state &st);
 // Function to show output of tracker
@@ -65,21 +65,21 @@ int main() {
     segmentHand(depthMap, st, mask);
     imshow("mask", mask);
     waitKey(30);
-    initializeTracker(img, depthMap, mask, st);
-    showImages(img, depthImg, mask, st);
+    initializeTracker(img, mask);
+    showImages(img, mask, st);
 
     for(int i=0; i<trainingImages; i++) {
         // Load and preprocess images
-        loadImage(img, depthImg, depthMap, true);
+        loadImage(img, depthImg, depthMap);
         segmentHand(depthMap, st, mask);
         // track hand
-        track(img, depthMap, st);
+        track(img, st);
         // Extract mask from depthImg - rightnow for PerPixRegression depth is
         // not used internally in training so only used for mask extraction (may
         // be used in future to add some features
 
         // show images/mask used for training
-        showImages(img, depthImg, mask, st);
+        showImages(img, mask, st);
         // train detector
         resize(img, img_res, Size(400, 400));
         resize(mask, mask_res, Size(400, 400));
@@ -123,7 +123,7 @@ int main() {
         //track(img, depthMap, st);
         //showOutput(img, st);
         // track hand - if not - detect hand using PerPixRegression
-        if(!track(img, depthMap, st)) {
+        if(!track(img, st)) {
             // detect hand
             dt.detect(img_res, depth_res, probImg);
             // convert probImg to state, if unsuccessful try for tryingThrehold frames
@@ -163,7 +163,7 @@ void initializeDetector(HT::PerPixRegression &dt) {
     /*
      * -- do some parameter changes rightnow using default
      */
-    //dt = HT::PerPixRegression();
+    dt = HT::PerPixRegression();
 }
 
 // Load and preprocess images
@@ -176,7 +176,7 @@ int maxImages = 100;
 void decodeDepthImage(Mat &encoded, Mat &decoded);
 
 // Loads and process images
-bool loadImage(Mat &img, Mat &depthImg, Mat &depthMap, bool useDepth) {
+bool loadImage(Mat &img, Mat &depthImg, Mat &depthMap) {
     static int i = 0;
     i++;
     if(i <= maxImages) {
@@ -223,7 +223,7 @@ void decodeDepthImage(Mat &encoded, Mat &decoded) {
 }
 
 // Function to show images and mask used for training
-void showImages(Mat &img, Mat &depthImg, Mat &mask, state &st) {
+void showImages(Mat &img, Mat &mask, state &st) {
     // create image for final output
     Mat showImg(img.rows, 2*img.cols, CV_8UC3, Scalar(0));
     Mat roi, roi1, roi2;
@@ -333,7 +333,7 @@ MatND objHist;
 
 TermCriteria criteria;
 //initialize tracker
-void initializeTracker(Mat &img, Mat &depthImg, Mat &mask, state &s) {
+void initializeTracker(Mat &img, Mat &mask) {
     Mat img_hsv;
     cvtColor(img, img_hsv, COLOR_BGR2HSV);
     vector<Mat> channel;
@@ -347,7 +347,7 @@ void initializeTracker(Mat &img, Mat &depthImg, Mat &mask, state &s) {
     normalize(objHist, objHist, 0, 1, NORM_MINMAX, -1, Mat() );
 }
 // track hand
-bool track(Mat &img, Mat &depthImg, state &s) {
+bool track(Mat &img, state &s) {
     Mat imgCpy, binOut;
     cvtColor(img, imgCpy, COLOR_BGR2HSV);
 
@@ -431,7 +431,6 @@ void segmentHand(cv::Mat &depth, state &s, Mat &mask) {
     {
         current = _pixels.front();
         _pixels.pop();
-        unsigned short dv = depth.at<unsigned short>(current.first,current.second);
 
         if (current.first < minx) minx = current.first;
                 else if (current.first > maxx) maxx = current.first;
