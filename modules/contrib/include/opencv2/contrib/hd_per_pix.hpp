@@ -41,7 +41,8 @@
 //M*/
 
 // Contributers - Gurpinder Singh Sandhu
-//              - Cheng Li (All Lc.. entities)
+//              - Cheng Li
+//              - Kris Kitani
 
 
 #ifndef _HDPERPIXREGRESSION_HPP_
@@ -193,13 +194,17 @@ public :
         CV_PROP_RW int testing_step_size;
 
         Params();
-
+        void read( const FileStorage& fn );
+        void write( FileStorage& fs ) const;
     };
 
     // constructor for PerPixRegression
         CV_WRAP PerPixRegression(const Params &parameters = Params());
         // Default destructor
-        virtual ~PerPixRegression() { }
+        virtual ~PerPixRegression() { 
+            for(int i=0; i<param.models; i++)
+                delete classifier[i];
+        }
 
         // Function to train models on input image
         virtual bool train(Mat & _rgbImg, Mat & _depthImg, Mat & _mask, bool incremental = false);

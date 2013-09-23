@@ -83,7 +83,7 @@ int main(int argc, const char** argv) {
     /*--------------------------Training---------------------------------*/
     HT::PerPixRegression::Params params;
     //defines how many pixels are to skiped during training or detection step
-    params.training_step_size = 5;
+    params.training_step_size = 3;
     params.testing_step_size = 3;
 
     // Training method used - PerPixRegression

@@ -71,11 +71,12 @@ void PerPixRegression::test(Mat &img, int num_models, OutputArray probImg)
             param.knn = param.models;
     if(num_models > param.knn)
         num_models = param.knn;
+
     Mat hist;
     computeColorHist_HSV(img,hist);                                 // extract hist
     indices.clear();
     searchTree.knnSearch(hist, indices, dists, param.knn);            // probe search
-    //Mat descriptors1;
+    //Mat descriptors;
     extractor.work(img,descriptors,param.testing_step_size,&kp);
 
     if(!responseAvg.data) responseAvg = Mat::zeros(descriptors.rows,1,CV_32FC1);
@@ -222,11 +223,11 @@ bool PerPixRegression::train(Mat &_rgbImg, Mat &_depthImg, Mat &_mask, bool incr
 
     Mat desc;
     Mat lab;
-    vector<KeyPoint> kp1;
+    //vector<KeyPoint> kp;
     CvRTrees *rt = new CvRTrees;
 
     _mask.convertTo(_mask,CV_8UC1);
-    extractor.work(_rgbImg, desc, _mask, lab, param.training_step_size, &kp1);
+    extractor.work(_rgbImg, desc, _mask, lab, param.training_step_size, &kp);
 
     Mat varType = Mat::ones(desc.cols+1,1,CV_8UC1) * CV_VAR_NUMERICAL;
     rt->train(desc,CV_ROW_SAMPLE,lab,Mat(),Mat(),varType,Mat(), RTparams);
