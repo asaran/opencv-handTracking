@@ -11,4 +11,4 @@ The module contains some recently added functionality that has not been stabiliz
     FaceRecognizer Documentation <facerec/index>
     Retina Documentation <retina/index>
     openfabmap
-    hand_detection <hand_detection/index>
+    Hand Detection <hand_detection/index>
